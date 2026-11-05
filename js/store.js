@@ -54,7 +54,7 @@ function seed() {
     v: 1, onboarded: false, session: null, users, badings, comments, notifications, incoming,
     draft: { text: '', anonymous: false }, mentionPolicy: 'everyone', favorites: [], blocked: [], postedToday: 0,
     badge: { status: 'refused', reason: 'il faut au moins 10 badings publiés', decidedAt: now - 3 * d },
-    deletion: { status: 'none' }, pendingLink: null, notifEnabled: false,
+    deletion: { status: 'none' }, pendingLink: null, notifEnabled: false, accounts: {}, pendingSignup: null,
   };
 }
 
@@ -109,10 +109,36 @@ export function validate(text) {
 
 // ─── Actions ──────────────────────────────────────────────
 export function finishOnboarding() { state.onboarded = true; commit(); }
+// Comptes e-mail + mot de passe. Démo : gardés dans le navigateur, mot de passe haché (SHA-256 + sel).
+// En production, c'est le backend qui stocke le hash (bcrypt/argon2) : remplacer par POST /auth/register et /auth/login.
+async function hash(email, pw) {
+  const data = new TextEncoder().encode(`jebade:${email}:${pw}`);
+  return [...new Uint8Array(await crypto.subtle.digest('SHA-256', data))].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+export function passwordProblem(pw) {
+  if (pw.length < 8) return 'Au moins 8 caractères.';
+  if (!/[A-Za-z]/.test(pw) || !/\d/.test(pw)) return 'Mélange des lettres et des chiffres.';
+  return null;
+}
+export async function checkEmailFree(email) { return state.accounts?.[email] ? 'taken' : 'ok'; }
+export function setPendingSignup(p) { state.pendingSignup = p; commit(); }
+export async function register(pseudo) {
+  const { email, pw } = state.pendingSignup;
+  state.accounts = { ...(state.accounts || {}), [email]: { hash: await hash(email, pw), pseudo, createdAt: Date.now() } };
+  state.pendingSignup = null;
+  signIn(email, pseudo);
+}
+export async function logIn(email, pw) {
+  const acc = state.accounts?.[email];
+  if (!acc) return 'unknown';
+  if (acc.hash !== (await hash(email, pw))) return 'wrong_password';
+  signIn(email, acc.pseudo);
+  return 'ok';
+}
 export function signIn(identifier, pseudo) {
   const u = { id: ME, pseudo, verified: false, hue: 280, joinedAt: Date.now() - 45 * d };
   state.users[ME] = { ...u, ...(state.users[ME]?.avatar ? { avatar: state.users[ME].avatar } : {}) };
-  state.session = { identifier, user: state.users[ME] };
+  state.session = { email: identifier, user: state.users[ME] };
   commit();
 }
 export function signOut() { state.session = null; commit(); }

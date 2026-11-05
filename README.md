@@ -29,7 +29,7 @@ Ce dépôt est la **version web** de l'app mobile ([jean-emmvnuel/jebade](https:
 |---|---|
 | 🎬 | **Splash GSAP** : le b du logo rit (avec ses dents) puis zoome vers l'app |
 | 🎨 | **Onboarding** à glisser (doigt ou souris) : la couleur de fond se transforme, cartes en parallaxe |
-| 🔐 | **Inscription** téléphone ou e-mail, code à 6 chiffres, pseudo + charte du Badeur |
+| 🔐 | **Inscription** e-mail + mot de passe (afficher/masquer, confirmation), pseudo + charte du Badeur ; **connexion** et mot de passe oublié |
 | 📰 | **Fil** façon X : en-tête qui se replie, entrée des cartes en cascade, **pull-to-refresh** où le b rit pendant le chargement |
 | 😂 | **Rire** avec explosion de **confettis** (physique GSAP) |
 | 💬 | **Commentaires et réponses** avec **traits de fil**, repli des réponses, suppression avec confirmation |
@@ -51,7 +51,7 @@ Aucun build, aucune installation : un simple serveur statique suffit (les module
 python3 -m http.server 5173
 ```
 
-Puis ouvre <http://localhost:5173>. Le code `000000` simule un code OTP erroné ; tout autre code fonctionne.
+Puis ouvre <http://localhost:5173>. Crée un compte avec n'importe quel e-mail : les comptes de démo sont gardés dans le navigateur (mot de passe haché).
 
 Les données sont simulées et gardées dans le navigateur (`localStorage`), comme sur mobile, en attendant le backend (voir `BACKEND.md` du dépôt mobile). Pour repartir de zéro : `localStorage.removeItem('jebade-web-v1')` dans la console.
 

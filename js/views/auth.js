@@ -1,5 +1,5 @@
 import * as S from '../store.js';
-import { $, esc, icon } from '../ui.js';
+import { $, esc, icon, toast } from '../ui.js';
 
 const frame = (step, total, title, subtitle, body, foot, backBtn = true) => `
   <div class="full">
@@ -17,95 +17,87 @@ const frame = (step, total, title, subtitle, body, foot, backBtn = true) => `
 
 const enter = (root) => gsap.from($('.auth-body', root).children, { y: 18, opacity: 0, duration: 0.5, stagger: 0.07, ease: 'expo.out' });
 
-// ─── 1. Téléphone ou e-mail ───────────────────────────────
+// ─── 1. E-mail + mot de passe (inscription ou connexion) ──
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const pwField = (id, label, autocomplete, hint = '') => `
+  <div class="field"><label for="${id}">${label}</label>
+    <div class="input" data-box="${id}"><input id="${id}" type="password" autocomplete="${autocomplete}" placeholder="••••••••" maxlength="72"/>
+      <button type="button" class="t-small reveal" data-reveal="${id}" aria-label="Afficher le mot de passe" aria-pressed="false">Afficher</button></div>
+    ${hint ? `<p class="hint" data-hint="${id}">${hint}</p>` : ''}<p class="error" data-err="${id}" hidden></p></div>`;
+
 export function signupView(root, { query, go }) {
   const login = query.mode === 'login';
-  let method = 'phone';
-  const validate = (v) => method === 'phone'
-    ? (/^0\d{9}$/.test(v.replace(/\s/g, '')) ? null : 'Un numéro ivoirien a 10 chiffres et commence par 0 (ex. 07 07 12 34 56).')
-    : (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? null : "Cette adresse e-mail n'a pas l'air complète.");
-  const field = () => method === 'phone'
-    ? `<div class="field"><label for="id">Numéro de téléphone</label><div class="input" data-box><span class="prefix">+225</span><input id="id" type="tel" inputmode="tel" autocomplete="tel" placeholder="07 07 12 34 56" maxlength="14"/></div><p class="error" data-err hidden></p></div>`
-    : `<div class="field"><label for="id">Adresse e-mail</label><div class="input" data-box><input id="id" type="email" autocomplete="email" placeholder="toi@exemple.com"/></div><p class="error" data-err hidden></p></div>`;
-
-  root.innerHTML = frame(1, login ? 2 : 3, login ? 'Content de te revoir' : 'On commence par toi',
-    "On t'envoie un code pour confirmer que c'est bien toi. Pas de mot de passe à retenir.",
-    `<div class="segmented" role="tablist"><button role="tab" data-m="phone" aria-selected="true">Téléphone</button><button role="tab" data-m="email" aria-selected="false">Email</button></div><div data-field>${field()}</div>`,
-    `<button class="btn btn-primary btn-block" data-send disabled>Recevoir le code</button>`, false);
+  root.innerHTML = frame(1, login ? 1 : 2, login ? 'Content de te revoir' : 'Crée ton compte',
+    login ? 'Connecte-toi avec ton adresse e-mail et ton mot de passe.' : 'Ton e-mail reste privé : personne ne le voit, même quand tu publies en anonyme.',
+    `<form class="auth-form" data-form novalidate style="display:flex;flex-direction:column;gap:16px">
+      <div class="field"><label for="email">Adresse e-mail</label><div class="input" data-box="email"><input id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="toi@exemple.com"/></div><p class="error" data-err="email" hidden></p></div>
+      ${pwField('pw', 'Mot de passe', login ? 'current-password' : 'new-password', login ? '' : 'Au moins 8 caractères, avec des lettres et des chiffres.')}
+      ${login ? '<button type="button" class="t-label link" data-forgot>Mot de passe oublié ?</button>' : pwField('pw2', 'Confirme le mot de passe', 'new-password')}
+      <p class="error" data-err="form" hidden></p>
+      <button type="submit" hidden></button>
+    </form>`,
+    `<button class="btn btn-primary btn-block" data-send disabled>${login ? 'Se connecter' : 'Continuer'}</button>
+     <p class="switch muted">${login ? "Pas encore de compte ? <a href=\"#/auth/signup\">S'inscrire</a>" : 'Déjà un compte ? <a href="#/auth/signup?mode=login">Se connecter</a>'}</p>`, false);
   enter(root);
 
-  const send = $('[data-send]', root);
-  const wire = () => {
-    const input = $('#id', root);
-    input.oninput = () => { send.disabled = !input.value; $('[data-err]', root).hidden = true; $('[data-box]', root).classList.remove('err'); };
-    input.onkeydown = (e) => e.key === 'Enter' && submit();
-    input.focus();
+  const form = $('[data-form]', root), send = $('[data-send]', root);
+  const val = (id) => $(`#${id}`, root)?.value ?? '';
+  const setErr = (id, msg) => {
+    const e = $(`[data-err="${id}"]`, root); if (!e) return;
+    e.textContent = msg || ''; e.hidden = !msg;
+    $(`[data-box="${id}"]`, root)?.classList.toggle('err', !!msg);
+    const h = $(`[data-hint="${id}"]`, root); if (h) h.hidden = !!msg;
   };
-  root.querySelectorAll('[data-m]').forEach((b) => (b.onclick = () => {
-    method = b.dataset.m;
-    root.querySelectorAll('[data-m]').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
-    $('[data-field]', root).innerHTML = field(); send.disabled = true; wire();
+  const clearAll = () => ['email', 'pw', 'pw2', 'form'].forEach((k) => setErr(k));
+  const ready = () => (send.disabled = !(val('email') && val('pw') && (login || val('pw2'))));
+  form.addEventListener('input', () => { clearAll(); ready(); });
+
+  root.querySelectorAll('[data-reveal]').forEach((b) => (b.onclick = () => {
+    const input = $(`#${b.dataset.reveal}`, root), show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    b.textContent = show ? 'Masquer' : 'Afficher'; b.setAttribute('aria-pressed', String(show));
+    b.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
   }));
-  const submit = () => {
-    const v = $('#id', root).value;
-    const err = validate(v);
-    if (err) { const e = $('[data-err]', root); e.textContent = err; e.hidden = false; $('[data-box]', root).classList.add('err'); return; }
-    send.disabled = true; send.textContent = 'Envoi…';
-    setTimeout(() => go(`/auth/verify?id=${encodeURIComponent(method === 'phone' ? `+225 ${v}` : v.trim())}${login ? '&login=1' : ''}`), 800);
-  };
-  send.onclick = submit;
-  wire();
-}
 
-// ─── 2. Code OTP ──────────────────────────────────────────
-export function verifyView(root, { query, go, back }) {
-  const LEN = 6;
-  root.innerHTML = frame(2, query.login ? 2 : 3, 'Entre le code', `On l'a envoyé à ${esc(query.id)}.`,
-    `<div class="otp" data-otp>${Array.from({ length: LEN }, (_, i) => `<div class="box ${i === 0 ? 'cur' : ''}"></div>`).join('')}<input inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Code de confirmation à 6 chiffres"/></div>
-     <p class="error" data-err hidden></p>
-     <button class="t-label" data-resend disabled style="align-self:flex-start;min-height:44px;color:var(--text-3)"></button>
-     <p class="hint">Démo : n'importe quel code fonctionne, sauf 000000.</p>`,
-    `<button class="btn btn-primary btn-block" data-verify disabled>Vérifier</button>`);
-  enter(root);
-  $('[data-back]', root).onclick = () => back('/auth/signup');
-  const input = $('[data-otp] input', root), boxes = root.querySelectorAll('.otp .box'), btn = $('[data-verify]', root);
-  let wait = 30;
-  const resend = $('[data-resend]', root);
-  const tick = () => { resend.textContent = wait > 0 ? `Renvoyer le code dans ${wait} s` : 'Renvoyer le code'; resend.disabled = wait > 0; resend.style.color = wait > 0 ? 'var(--text-3)' : 'var(--brand-ink)'; };
-  tick();
-  const timer = setInterval(() => { if (wait > 0) { wait -= 1; tick(); } }, 1000);
-  resend.onclick = () => { wait = 30; tick(); };
-  const draw = () => {
-    const v = input.value;
-    boxes.forEach((b, i) => { b.textContent = v[i] ?? ''; b.classList.toggle('cur', i === v.length); b.classList.remove('err'); });
-    btn.disabled = v.length < LEN;
+  $('[data-forgot]', root)?.addEventListener('click', () => {
+    const email = val('email').trim();
+    if (!EMAIL.test(email)) return setErr('email', "Entre d'abord ton adresse e-mail, on t'enverra un lien.");
+    toast(`Si un compte existe pour ${email}, un lien pour changer le mot de passe vient d'être envoyé.`);
+  });
+
+  const submit = async () => {
+    clearAll();
+    const email = val('email').trim().toLowerCase(), pw = val('pw');
+    let bad = false;
+    if (!EMAIL.test(email)) { setErr('email', "Cette adresse e-mail n'a pas l'air complète."); bad = true; }
+    if (!login) {
+      const pwErr = S.passwordProblem(pw);
+      if (pwErr) { setErr('pw', pwErr); bad = true; }
+      else if (pw !== val('pw2')) { setErr('pw2', 'Les deux mots de passe ne sont pas identiques.'); bad = true; }
+    }
+    if (bad) return;
+    send.disabled = true; send.textContent = login ? 'Connexion…' : 'Vérification…';
+    const res = login ? await S.logIn(email, pw) : await S.checkEmailFree(email);
+    send.textContent = login ? 'Se connecter' : 'Continuer'; send.disabled = false;
+    if (res === 'unknown') return setErr('form', "Aucun compte n'utilise cet e-mail. Inscris-toi d'abord.");
+    if (res === 'wrong_password') { setErr('pw', 'Mot de passe incorrect.'); return; }
+    if (res === 'taken') return setErr('email', 'Un compte existe déjà avec cet e-mail. Connecte-toi plutôt.');
+    if (login) { const p = S.get().pendingLink; go(p ? `/bading/${p}` : '/', { replace: true }); return; }
+    S.setPendingSignup({ email, pw });
+    go('/auth/pseudo');
   };
-  const submit = () => {
-    const c = input.value; if (c.length < LEN) return;
-    btn.disabled = true; btn.textContent = 'Vérification…';
-    setTimeout(() => {
-      btn.textContent = 'Vérifier';
-      if (c === '000000') {
-        const e = $('[data-err]', root); e.textContent = 'Ce code ne correspond pas. Vérifie le SMS ou demande un nouveau code.'; e.hidden = false;
-        boxes.forEach((b) => b.classList.add('err'));
-        gsap.fromTo('[data-otp]', { x: 0 }, { keyframes: [{ x: 10 }, { x: -10 }, { x: 7 }, { x: -7 }, { x: 0 }], duration: 0.3 });
-        input.value = ''; setTimeout(draw, 600); return;
-      }
-      if (query.login) { S.signIn(query.id, 'Badeur225'); go(S.get().pendingLink ? `/bading/${S.get().pendingLink}` : '/', { replace: true }); }
-      else go(`/auth/pseudo?id=${encodeURIComponent(query.id)}`);
-    }, 700);
-  };
-  input.oninput = () => { input.value = input.value.replace(/\D/g, '').slice(0, LEN); $('[data-err]', root).hidden = true; draw(); if (input.value.length === LEN) submit(); };
-  btn.onclick = submit;
-  input.focus();
-  return () => clearInterval(timer);
+  form.addEventListener('submit', (e) => { e.preventDefault(); if (!send.disabled) submit(); });
+  send.onclick = submit;
+  ready();
+  $('#email', root).focus();
 }
 
 // ─── 3. Pseudo + charte ───────────────────────────────────
 const CHARTE = ['On rit des situations, pas des personnes.', "Pas de moqueries sur l'ethnie, la religion, le handicap, le genre ou l'orientation.", 'Pas de vrais noms ni de photos de personnes sans leur accord.', 'Pas de harcèlement, de menaces, d’insultes ni d’arnaques.'];
 
-export function pseudoView(root, { query, go, back }) {
-  root.innerHTML = frame(3, 3, 'Choisis ton nom de Badeur', "C'est ton pseudo public. Tu pourras toujours publier en anonyme.",
+export function pseudoView(root, { go, back }) {
+  if (!S.get().pendingSignup) { go('/auth/signup', { replace: true }); return; }
+  root.innerHTML = frame(2, 2, 'Choisis ton nom de Badeur', "C'est ton pseudo public. Tu pourras toujours publier en anonyme.",
     `<div class="field"><label for="pseudo">Pseudo</label><div class="input" data-box><span class="prefix">@</span><input id="pseudo" autocapitalize="off" autocomplete="off" maxlength="20" placeholder="TonPseudo"/><span data-state></span></div><p class="hint" data-hint>Visible sur ton profil et tes badings signés.</p></div>
      <div class="charte">
        <h2 class="t-title" style="font-size:24px">Ici, la seule règle, c'est qu'il n'y a pas de règle.</h2>
@@ -133,8 +125,9 @@ export function pseudoView(root, { query, go, back }) {
     }, 400);
   };
   accept.onclick = (e) => { if (e.target.closest('[data-privacy]')) return; accept.setAttribute('aria-checked', String(accept.getAttribute('aria-checked') !== 'true')); refresh(); };
-  enterBtn.onclick = () => {
-    S.signIn(query.id, input.value.trim());
+  enterBtn.onclick = async () => {
+    enterBtn.disabled = true;
+    await S.register(input.value.trim());
     const pending = S.get().pendingLink;
     go(pending ? `/bading/${pending}` : '/', { replace: true });
   };

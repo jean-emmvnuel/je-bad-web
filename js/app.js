@@ -2,7 +2,7 @@ import * as S from './store.js';
 import { $, esc, icon, logo, avatar, reduceMotion, closeSheet } from './ui.js';
 import { registerSW, consumeLaunchParams, canInstall, install, onInstallChange, isStandalone } from './pwa.js';
 import { onboardingView } from './views/onboarding.js';
-import { signupView, verifyView, pseudoView } from './views/auth.js';
+import { signupView, pseudoView } from './views/auth.js';
 import { feedView } from './views/feed.js';
 import { badingView } from './views/bading.js';
 import { composeView } from './views/compose.js';
@@ -15,7 +15,6 @@ import { privacyView } from './views/privacy.js';
 const routes = [
   { path: /^\/onboarding$/, view: onboardingView, bare: true, public: true },
   { path: /^\/auth\/signup$/, view: signupView, bare: true, public: true },
-  { path: /^\/auth\/verify$/, view: verifyView, bare: true, public: true },
   { path: /^\/auth\/pseudo$/, view: pseudoView, bare: true, public: true },
   { path: /^\/privacy$/, view: privacyView, public: true },
   { path: /^\/$/, view: feedView, nav: 'feed' },

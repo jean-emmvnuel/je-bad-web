@@ -223,6 +223,12 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .input.err { border-color: var(--danger); box-shadow: 0 0 0 1px var(--danger); }
 .input input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; font-size: 17px; font-weight: 500; }
 .input .prefix { color: var(--text-2); font-weight: 700; }
+.reveal { color: var(--text-2); padding: 6px 8px; border-radius: var(--r-sm); flex: none; }
+.reveal:hover { color: var(--text); background: var(--surface-2); }
+.link { align-self: flex-start; color: var(--brand-ink); min-height: 32px; font-size: 14px; }
+.link:hover { text-decoration: underline; }
+.switch { text-align: center; font-size: 15px; margin-top: 16px; }
+.switch a { font-weight: 600; }
 .hint { font-size: 13px; color: var(--text-3); }
 .error { font-size: 13px; color: var(--danger); }
 textarea.plain { width: 100%; background: none; border: 0; outline: 0; resize: none; font-size: 20px; line-height: 1.4; font-weight: 500; }

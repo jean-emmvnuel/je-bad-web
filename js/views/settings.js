@@ -32,7 +32,7 @@ export function settingsView(root, { go, back }) {
         </div></div>
         <div class="section"><h3>Mes données</h3><div class="group">
           ${row('privacy', 'lock', 'Politique de confidentialité', 'Tes données, tes droits (loi ivoirienne n° 2013-450)')}
-          ${row('export', 'download', 'Recevoir une copie de mes données', 'Envoyée à ton e-mail ou par SMS sous 30 jours')}
+          ${row('export', 'download', 'Recevoir une copie de mes données', 'Envoyée à ton adresse e-mail sous 30 jours')}
           ${st.deletion.status === 'pending'
             ? `<div class="srow"><span style="color:var(--danger)">${icon('trash')}</span><span class="txt"><span class="t-label">Suppression demandée</span><small>Le ${S.fmtDate(st.deletion.requestedAt + S.RULES.deletionDays * DAY)} · tu peux encore annuler</small></span><button class="btn btn-secondary btn-sm" data-s="cancel-del">Annuler</button></div>`
             : row('delete', 'trash', 'Demander la suppression de mon compte', '', { danger: true })}
