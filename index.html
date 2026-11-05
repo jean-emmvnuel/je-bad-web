@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a1919" />
+  <title>Je Bade — raconte ce qui t'est arrivé</title>
+  <meta name="description" content="Je Bade, le réseau social où l'on raconte les galères du quotidien pour faire rire tout le monde. Signé ou en Badeur anonyme." />
+  <meta property="og:title" content="Je Bade" />
+  <meta property="og:description" content="Raconte ce qui t'est arrivé, fais rire tout le monde." />
+  <meta property="og:image" content="assets/icon-512.png" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="assets/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <noscript><p style="padding:24px;color:#F4F1F1">Je Bade a besoin de JavaScript pour fonctionner.</p></noscript>
+
+  <!-- Splash : le b qui rit, puis zoom vers l'app -->
+  <div id="splash" aria-hidden="true">
+    <svg id="splash-mark" viewBox="0 0 256 256" width="120" height="120">
+      <path d="M40 46a22 22 0 0 1 44 0V214a22 22 0 0 1-44 0Z" fill="#9810e6" />
+      <path d="M68 158A78 78 0 1 0 224 158A78 78 0 1 0 68 158Z" fill="#9810e6" />
+      <g id="splash-mouth">
+        <path d="M104 146H188A42 42 0 0 1 104 146Z" fill="#1a1919" />
+        <path d="M124.4 182A21.6 14 0 0 1 167.6 182A42 42 0 0 1 124.4 182Z" fill="#FF6FA8" />
+        <path d="M110 146H127V155a4 4 0 0 1-4 4H114a4 4 0 0 1-4-4Z M129 146H146V155a4 4 0 0 1-4 4H133a4 4 0 0 1-4-4Z M148 146H165V155a4 4 0 0 1-4 4H152a4 4 0 0 1-4-4Z M167 146H184V155a4 4 0 0 1-4 4H171a4 4 0 0 1-4-4Z" fill="#fff" />
+      </g>
+    </svg>
+  </div>
+
+  <div id="app"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="sheet-root"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

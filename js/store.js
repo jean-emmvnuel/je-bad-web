@@ -1,0 +1,179 @@
+// État de l'app + règles métier V1 (portage du store mobile).
+// Les actions correspondent aux routes de BACKEND.md : remplacer leur corps par des appels API.
+
+const min = 60_000, h = 60 * min, d = 24 * h;
+export const ME = 'me';
+
+export const RULES = { minLength: 10, maxLength: 1000, opinionMax: 280, commentMax: 500, dailyLimit: 20, maxMentions: 5, badge: { minAgeDays: 30, minBadings: 10 }, badgeRetryDays: 30, deletionDays: 30 };
+const BANNED = ['connard', 'pute', 'nègre', 'tuer'];
+
+function seed() {
+  const now = Date.now();
+  const users = {
+    u1: { id: 'u1', pseudo: 'Koffi225', verified: false, hue: 28 },
+    u2: { id: 'u2', pseudo: 'AwaLaGo', verified: false, hue: 330 },
+    u3: { id: 'u3', pseudo: 'LeVraiZoba', verified: true, hue: 200 },
+    u4: { id: 'u4', pseudo: 'Tantie_Brou', verified: false, hue: 140 },
+    u5: { id: 'u5', pseudo: 'Djidji_Kpakpato', verified: false, hue: 52 },
+    u6: { id: 'u6', pseudo: 'YopougonFM', verified: true, hue: 265 },
+  };
+  const B = (o) => ({ likedByMe: false, rebades: 0, shares: 0, ...o });
+  const badings = [
+    B({ id: 'm1', authorId: ME, anonymous: false, text: "J'ai dit à mon patron que j'étais malade. Il m'a vu au match le soir à la télé, au premier rang, en train de danser. Lundi il m'a demandé si le docteur était bon.", createdAt: now - 3 * h, likes: 13, rebades: 2, shares: 1 }),
+    B({ id: 'm2', authorId: ME, anonymous: true, text: "J'ai fait semblant de comprendre l'anglais pendant toute une réunion. À la fin on m'a demandé de faire le résumé.", createdAt: now - 2 * d, likes: 64, rebades: 5, shares: 9 }),
+    B({ id: 'b1', authorId: 'u1', anonymous: false, text: "Gbaka m'a déposé devant la maison, j'ai dit merci au chauffeur comme si c'était un taxi privé. Tout le gbaka a applaudi. Je suis descendu en marchant comme ministre 😭", createdAt: now - 12 * min, likes: 248, rebades: 31, shares: 54 }),
+    B({ id: 'b2', authorId: 'u2', anonymous: true, text: "J'ai envoyé « ma chérie tu me manques » dans le groupe de la famille au lieu de l'envoyer à mon gars. Papa a répondu « moi aussi ». Depuis on ne parle plus de ça.", createdAt: now - 47 * min, likes: 1032, likedByMe: true, rebades: 120, shares: 410 }),
+    B({ id: 'b3', authorId: 'u4', anonymous: false, rebadeOf: 'b2', text: "Le « moi aussi » de papa là, c'est la phrase la plus dangereuse de 2026 💀", createdAt: now - 30 * min, likes: 87, shares: 4 }),
+    B({ id: 'b4', authorId: 'u3', anonymous: false, text: "Coupure de courant à 21h. Tout le quartier sort. Courant revient. Tout le monde crie « ÉHHH » comme si la Côte d'Ivoire venait de marquer. On est un peuple simple.", createdAt: now - 2 * h, likes: 3410, rebades: 402, shares: 1290 }),
+    B({ id: 'b5', authorId: 'u5', anonymous: false, text: "Au maquis j'ai commandé « comme d'habitude ». La serveuse m'a regardé. C'était ma première fois là-bas. Elle m'a amené attiéké poisson quand même. Elle me connaît mieux que moi.", createdAt: now - 5 * h, likes: 512, rebades: 18, shares: 77 }),
+    B({ id: 'b6', authorId: 'u6', anonymous: false, rebadeOf: 'b4', text: '', createdAt: now - 6 * h, likes: 40, shares: 2 }),
+    B({ id: 'b7', authorId: 'u1', anonymous: true, text: "Ma mère m'a demandé de « regarder » la sauce sur le feu. J'ai regardé. Littéralement. Elle a brûlé pendant que je regardais. Elle a dit que je suis intelligent pour rien.", createdAt: now - d, likes: 2201, rebades: 260, shares: 640 }),
+  ];
+  const C = (o) => ({ likes: 0, likedByMe: false, parentId: null, ...o });
+  const comments = [
+    C({ id: 'c1', badingId: 'b4', authorId: 'u2', text: "Le « ÉHHH » collectif c'est notre hymne national bis 😭", createdAt: now - 90 * min, likes: 42 }),
+    C({ id: 'c2', badingId: 'b4', authorId: 'u1', text: 'Et après tout le monde rentre comme si de rien était', createdAt: now - 70 * min, parentId: 'c1', replyTo: 'AwaLaGo', likes: 8 }),
+    C({ id: 'c3', badingId: 'b4', authorId: 'u5', text: 'Chez nous on applaudit même le frigo quand il redémarre', createdAt: now - 40 * min, likes: 17 }),
+    C({ id: 'c4', badingId: 'b1', authorId: 'u4', text: 'Ministre de la gbaka 😂', createdAt: now - 8 * min, likes: 5 }),
+    C({ id: 'c5', badingId: 'b2', authorId: 'u3', text: 'Papa a vu, papa a compris, papa a validé.', createdAt: now - 30 * min, likes: 64 }),
+    C({ id: 'c6', badingId: 'b2', authorId: 'u6', text: 'On veut la suite de cette histoire', createdAt: now - 20 * min, parentId: 'c5', replyTo: 'LeVraiZoba', likes: 3 }),
+    C({ id: 'c7', badingId: 'm1', authorId: 'u3', text: 'Le docteur était bon ou pas finalement ? 😭', createdAt: now - 2 * h, likes: 11 }),
+  ];
+  const notifications = [
+    { id: 'n1', kind: 'like', actorId: 'u1', others: 12, badingId: 'm1', createdAt: now - 8 * min, read: false },
+    { id: 'n2', kind: 'mention', actorId: null, badingId: 'b5', createdAt: now - 40 * min, read: false },
+    { id: 'n3', kind: 'comment', actorId: 'u3', badingId: 'm1', createdAt: now - 2 * h, read: true },
+    { id: 'n4', kind: 'badge', actorId: null, badgeStatus: 'refused', createdAt: now - 3 * d, read: true },
+  ];
+  const incoming = [
+    B({ id: 'n-1', authorId: 'u2', anonymous: false, text: "Mon voisin a mis la musique à fond à 6h du matin. Je suis allé me plaindre. Il m'a donné une bière. Maintenant on danse ensemble à 6h.", likes: 3 }),
+    B({ id: 'n-2', authorId: 'u5', anonymous: true, text: "Le woro-woro m'a demandé la monnaie de 10 000. J'ai dit que j'ai pas. Il a sorti la monnaie de 10 000 de sa poche pour me montrer qu'il en a, lui.", likes: 9, rebades: 1 }),
+    B({ id: 'n-3', authorId: 'u3', anonymous: false, text: "Ma tante a envoyé un vocal de 7 minutes pour dire « ok ». Les 6 premières minutes c'était le bruit du marché.", likes: 21, rebades: 2, shares: 3 }),
+  ];
+  return {
+    v: 1, onboarded: false, session: null, users, badings, comments, notifications, incoming,
+    draft: { text: '', anonymous: false }, mentionPolicy: 'everyone', favorites: [], blocked: [], postedToday: 0,
+    badge: { status: 'refused', reason: 'il faut au moins 10 badings publiés', decidedAt: now - 3 * d },
+    deletion: { status: 'none' }, pendingLink: null, notifEnabled: false,
+  };
+}
+
+const KEY = 'jebade-web-v1';
+let state;
+try { state = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch { state = seed(); }
+if (state.v !== 1) state = seed();
+
+const listeners = new Set();
+let saveTimer;
+function commit() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} }, 150);
+  listeners.forEach((fn) => fn(state));
+}
+export const subscribe = (fn) => (listeners.add(fn), () => listeners.delete(fn));
+export const get = () => state;
+export function resetAll() { state = seed(); commit(); }
+/** Sauvegarde + notifie après une mutation directe (faux serveur). */
+export function touch() { commit(); }
+
+// ─── Lecture ──────────────────────────────────────────────
+export const me = () => state.session?.user ?? null;
+export const user = (id) => state.users[id];
+export const bading = (id) => state.badings.find((b) => b.id === id);
+export const feed = () => state.badings.filter((b) => !b.deleted && !state.blocked.includes(b.authorId)).sort((a, b) => b.createdAt - a.createdAt);
+export function displayName(b) {
+  if (b.anonymous) return { name: 'Badeur anonyme', handle: null, user: null };
+  const u = state.users[b.authorId];
+  return { name: u?.pseudo ?? 'Badeur', handle: u ? `@${u.pseudo}` : null, user: u ?? null };
+}
+export const unread = () => state.notifications.filter((n) => !n.read).length;
+const liveComments = (badingId) => state.comments.filter((c) => c.badingId === badingId && !c.deleted && !state.blocked.includes(c.authorId));
+export const commentCount = (badingId) => liveComments(badingId).length;
+export function threads(badingId) {
+  const live = liveComments(badingId);
+  return live.filter((c) => !c.parentId).sort((a, b) => b.likes - a.likes || a.createdAt - b.createdAt)
+    .map((root) => ({ root, replies: live.filter((c) => c.parentId === root.id).sort((a, b) => a.createdAt - b.createdAt) }));
+}
+export const searchPseudos = (q) => Object.values(state.users).filter((u) => u.id !== ME && !state.blocked.includes(u.id) && u.pseudo.toLowerCase().startsWith(q.toLowerCase())).slice(0, 5);
+export const countMentions = (t) => (t.match(/@[\w.]+/g) ?? []).length;
+
+export function validate(text) {
+  const t = text.trim();
+  if (t.length < RULES.minLength) return 'too_short';
+  if (t.length > RULES.maxLength) return 'too_long';
+  if (countMentions(t) > RULES.maxMentions) return 'too_many_mentions';
+  if (state.postedToday >= RULES.dailyLimit) return 'daily_limit';
+  if (BANNED.some((w) => t.toLowerCase().includes(w))) return 'blocked_word';
+  return null;
+}
+
+// ─── Actions ──────────────────────────────────────────────
+export function finishOnboarding() { state.onboarded = true; commit(); }
+export function signIn(identifier, pseudo) {
+  const u = { id: ME, pseudo, verified: false, hue: 280, joinedAt: Date.now() - 45 * d };
+  state.users[ME] = { ...u, ...(state.users[ME]?.avatar ? { avatar: state.users[ME].avatar } : {}) };
+  state.session = { identifier, user: state.users[ME] };
+  commit();
+}
+export function signOut() { state.session = null; commit(); }
+export function setPendingLink(id) { state.pendingLink = id; commit(); }
+function syncMe() { if (state.session) state.session.user = state.users[ME]; }
+
+export function toggleLike(id) {
+  const b = bading(id); if (!b) return;
+  b.likes += b.likedByMe ? -1 : 1; b.likedByMe = !b.likedByMe; commit();
+}
+export function share(id) { const b = bading(id); if (b) { b.shares += 1; commit(); } }
+export function publish(text, anonymous) {
+  const err = validate(text); if (err) return { ok: false, error: err };
+  const id = `m${Date.now()}`;
+  state.badings.unshift({ id, authorId: ME, anonymous, text: text.trim(), createdAt: Date.now(), likes: 0, likedByMe: false, rebades: 0, shares: 0 });
+  state.postedToday += 1; state.draft = { text: '', anonymous: false }; commit();
+  return { ok: true, id };
+}
+export function rebade(id, opinion, anonymous) {
+  const t = bading(id); const origin = t?.rebadeOf ?? id;
+  state.badings.unshift({ id: `r${Date.now()}`, authorId: ME, anonymous, rebadeOf: origin, text: opinion.trim().slice(0, RULES.opinionMax), createdAt: Date.now(), likes: 0, likedByMe: false, rebades: 0, shares: 0 });
+  const o = bading(origin); if (o) o.rebades += 1; commit();
+}
+export function remove(id) { const b = bading(id); if (b) { b.deleted = true; commit(); } }
+export function setDraft(draft) { state.draft = draft; commit(); }
+export function markAllRead() { state.notifications.forEach((n) => (n.read = true)); commit(); }
+export function setMentionPolicy(p) { state.mentionPolicy = p; commit(); }
+export function toggleFavorite(id) {
+  const on = state.favorites.includes(id);
+  state.favorites = on ? state.favorites.filter((x) => x !== id) : [id, ...state.favorites]; commit(); return !on;
+}
+export function block(uid) { if (!state.blocked.includes(uid)) state.blocked.push(uid); commit(); }
+export function unblock(uid) { state.blocked = state.blocked.filter((x) => x !== uid); commit(); }
+export function changePseudo(p) { state.users[ME].pseudo = p; state.users[ME].verified = false; syncMe(); commit(); }
+export function setAvatar(a) { state.users[ME].avatar = a; syncMe(); commit(); }
+export function requestBadge(links) { state.badge = { status: 'pending', links }; commit(); }
+export function requestDeletion(reason) { state.deletion = { status: 'pending', requestedAt: Date.now(), reason }; commit(); }
+export function cancelDeletion() { state.deletion = { status: 'none' }; commit(); }
+export function addComment(badingId, text, parent) {
+  const t = text.trim(); if (!t || t.length > RULES.commentMax) return null;
+  const c = { id: `c${Date.now()}`, badingId, authorId: ME, text: t, createdAt: Date.now(), parentId: parent ? parent.parentId ?? parent.id : null, replyTo: parent ? state.users[parent.authorId]?.pseudo : undefined, likes: 0, likedByMe: false };
+  state.comments.push(c); commit(); return c;
+}
+export function removeComment(id) { state.comments.forEach((c) => { if (c.id === id || c.parentId === id) c.deleted = true; }); commit(); }
+export function toggleCommentLike(id) { const c = state.comments.find((x) => x.id === id); if (c) { c.likes += c.likedByMe ? -1 : 1; c.likedByMe = !c.likedByMe; commit(); } }
+export function setNotifEnabled(v) { state.notifEnabled = v; commit(); }
+export function pushNotification(n) { state.notifications.unshift({ ...n, id: `n${Date.now()}`, createdAt: Date.now(), read: false }); commit(); }
+
+/** Faux serveur : nouveaux badings au pull-to-refresh. */
+export function refreshFeed() {
+  return new Promise((resolve) => setTimeout(() => {
+    const batch = state.incoming.splice(0, Math.random() < 0.5 ? 1 : 2).map((b) => ({ ...b, createdAt: Date.now() }));
+    state.badings.unshift(...batch); commit(); resolve(batch.length);
+  }, 1300));
+}
+
+// ─── Formatage ────────────────────────────────────────────
+export function timeAgo(ts) {
+  const s = Math.max(1, Math.floor((Date.now() - ts) / 1000));
+  if (s < 60) return `${s} s`; const m = Math.floor(s / 60); if (m < 60) return `${m} min`;
+  const hh = Math.floor(m / 60); if (hh < 24) return `${hh} h`; return `${Math.floor(hh / 24)} j`;
+}
+export function compact(n) { if (n < 1000) return String(n); if (n < 10_000) return `${(n / 1000).toFixed(1).replace('.0', '')} k`; return `${Math.round(n / 1000)} k`; }
+export const fmtDate = (ts) => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
