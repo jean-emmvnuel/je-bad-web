@@ -14,7 +14,10 @@ export async function enableNotifications() {
 /** Notification système (onglet en arrière-plan) ou toast (onglet visible). Le clic ouvre l'écran. */
 export function notify(title, body, path) {
   if (notifSupported() && Notification.permission === 'granted' && S.get().notifEnabled && document.visibilityState !== 'visible') {
-    const n = new Notification(title, { body, icon: 'assets/icon-192.png', badge: 'assets/icon-192.png', tag: path });
+    const opts = { body, icon: 'assets/icon-192.png', badge: 'assets/icon-192.png', tag: path, data: { path } };
+    // Dans la PWA installée (Android), seules les notifications du service worker sont autorisées.
+    if (navigator.serviceWorker?.controller) { navigator.serviceWorker.ready.then((reg) => reg.showNotification(title, opts)); return; }
+    const n = new Notification(title, opts);
     n.onclick = () => { window.focus(); location.hash = `#${path}`; n.close(); };
   } else toast(`${title} — ${body}`);
 }

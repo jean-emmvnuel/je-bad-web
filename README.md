@@ -38,7 +38,9 @@ Ce dépôt est la **version web** de l'app mobile ([jean-emmvnuel/jebade](https:
 | 👤 | **Profil** : statistiques qui défilent, onglets Badings / Favoris / Anonymes, **20 avatars « Badeur »** au hasard |
 | 🔔 | **Notifications du navigateur** (rires, réponses) |
 | ⚙️ | Paramètres : pseudo, mentions, blocages, badge vérifié, **demande de suppression du compte**, copie des données, confidentialité |
-| 💻 | **Responsive** : barre d'onglets sur mobile, navigation latérale + « Badings du moment » sur ordinateur |
+| 💻 | **Vrai rendu web** sur ordinateur : barre de navigation en haut, 3 colonnes (mon compte · fil en cartes · badings du moment), inscription en écran partagé ; barre d'onglets sur mobile |
+| 📲 | **PWA installable** (Android, iPhone, ordinateur) : hors ligne, raccourcis « Bader » et « Notifications », partage de texte vers Je Bade |
+| 🔗 | **Liens dynamiques** `…/?b=<id>` : ils s'ouvrent dans l'app installée, sinon sur le site, directement sur le bading |
 | ♿ | Clavier, focus visibles, libellés ARIA, `prefers-reduced-motion` respecté |
 
 ## 🚀 Lancer
@@ -58,7 +60,10 @@ Les données sont simulées et gardées dans le navigateur (`localStorage`), com
 ```
 index.html            ← coquille, splash, chargement de GSAP
 css/style.css         ← tokens (identiques au mobile), mise en page, composants
-js/app.js             ← routeur (hash), coquille responsive, splash GSAP
+js/app.js             ← routeur (hash), coquille web responsive, splash GSAP
+js/pwa.js             ← service worker, installation, liens dynamiques, partage vers l'app
+sw.js                 ← service worker (cache hors ligne, notifications)
+manifest.webmanifest  ← manifeste de la PWA
 js/store.js           ← état + règles métier V1 + données simulées (→ API plus tard)
 js/components.js      ← carte de bading, actions, rebade, partage (image canvas), menus
 js/ui.js              ← icônes, avatars, feuilles, toasts, confettis GSAP
@@ -68,7 +73,14 @@ js/views/*.js         ← onboarding, auth, fil, bading, publier, profil, notifi
 data/privacy.json     ← politique de confidentialité (même source que l'app)
 ```
 
-Les liens partagés ont la forme `…/#/b/<id>` : sans compte, le visiteur passe par l'inscription puis arrive directement sur le bading.
+Les liens partagés ont la forme `…/?b=<id>` (l'ancienne forme `…/#/b/<id>` marche toujours) : sans compte, le visiteur passe par l'inscription puis arrive directement sur le bading.
+
+## 📲 PWA
+
+- `manifest.webmanifest` : nom, icônes, raccourcis, `share_target` (partager un texte depuis une autre app ouvre « Nouveau bading »), `launch_handler` + `handle_links` (un lien Je Bade ouvre l'app déjà installée).
+- `sw.js` : coquille en cache (hors ligne, ouverture instantanée), polices et GSAP en cache, clic sur les notifications. **Change `VERSION` dans `sw.js` à chaque mise en ligne.**
+- `js/pwa.js` : enregistrement du service worker, bouton « Installer l'app » (invite native sur Chrome/Edge/Android, mode d'emploi sur iPhone), lecture des liens `?b=` et des partages.
+- L'installation demande **HTTPS** (ou `localhost`).
 
 ---
 

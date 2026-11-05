@@ -16,6 +16,7 @@ export function composeView(root, { go, back }) {
   let anonymous = draft.anonymous, published = false;
   root.innerHTML = `
     <header class="topbar"><button class="icon-btn" data-close aria-label="Fermer, le brouillon est gardé">${icon('x')}</button><h1 class="t-heading">Nouveau bading</h1><button class="btn btn-primary btn-sm" data-publish disabled>Publier</button></header>
+    <div class="compose-box">
     <div style="padding:16px;display:flex;gap:12px">
       <span data-av>${avatar(anonymous ? null : me, 44)}</span>
       <div style="flex:1;display:flex;flex-direction:column;gap:6px">
@@ -32,6 +33,7 @@ export function composeView(root, { go, back }) {
         <button class="toggle" role="switch" aria-checked="${anonymous}" aria-label="Publier en anonyme" data-anon><i></i></button>
       </div>
       <div style="display:flex;justify-content:space-between" class="t-small"><span data-left style="color:var(--text-3)"></span><span data-count style="font-variant-numeric:tabular-nums;color:var(--text-3)"></span></div>
+    </div>
     </div>`;
 
   const ta = $('textarea', root), pub = $('[data-publish]', root), err = $('[data-err]', root);

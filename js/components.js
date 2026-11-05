@@ -1,9 +1,14 @@
 import * as S from './store.js';
 import { $, avatar, closeSheet, confetti, esc, icon, logo, reduceMotion, rich, sheet, sheetItem, toast, verified } from './ui.js';
 
+import { badingUrl } from './pwa.js';
+
 const PUBLIC_HOST = 'https://jebade.app';
-/** Lien dynamique : sur le site, il ouvre directement le bading (#/b/<id>) ; en prod → jebade.app/b/<id>. */
-export const badingLink = (id) => (location.hostname.endsWith('jebade.app') ? `${PUBLIC_HOST}/b/${id}` : `${location.origin}${location.pathname}#/b/${id}`);
+/**
+ * Lien dynamique : `…/?b=<id>` reste dans la portée de la PWA, donc il s'ouvre dans l'app installée
+ * (Android, ordinateur) et sinon sur le site, directement sur le bading. En prod → jebade.app/b/<id>.
+ */
+export const badingLink = (id) => (location.hostname.endsWith('jebade.app') ? `${PUBLIC_HOST}/b/${id}` : badingUrl(id));
 const teaser = (t) => (t.length > 140 ? `${t.slice(0, 140).trimEnd()}…` : t);
 const shareText = (b, url) => `${b.text ? `« ${teaser(b.text)} »\n\n` : ''}😂 Lis la suite sur Je Bade : ${url}`;
 

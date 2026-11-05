@@ -1,5 +1,6 @@
 import * as S from './store.js';
 import { $, esc, icon, logo, avatar, reduceMotion, closeSheet } from './ui.js';
+import { registerSW, consumeLaunchParams, canInstall, install, onInstallChange, isStandalone } from './pwa.js';
 import { onboardingView } from './views/onboarding.js';
 import { signupView, verifyView, pseudoView } from './views/auth.js';
 import { feedView } from './views/feed.js';
@@ -72,7 +73,7 @@ function render() {
 
   if (route.bare || (!st.session && route.public)) {
     shellMounted = false;
-    app.innerHTML = '<main id="view"></main>';
+    app.innerHTML = path.startsWith('/auth/') ? `<div class="auth-split">${authPane()}<main id="view"></main></div>` : '<main id="view"></main>';
   } else if (!shellMounted) {
     app.innerHTML = shell();
     shellMounted = true;
@@ -85,32 +86,64 @@ function render() {
   cleanup = route.view(view, { params, query, go, back }) || null;
 }
 
-// ─── Coquille : rail (desktop), colonne de droite, onglets (mobile) ──
+// ─── Coquille web : barre du haut + 3 colonnes (ordinateur), onglets (mobile) ──
+const authPane = () => `
+  <aside class="auth-brand" aria-hidden="true">
+    <a class="brand" href="#/">${logo(40, '#fff')}<span>je bade</span></a>
+    <div class="pitch">
+      <h2 class="t-hero">Raconte ce qui t'est arrivé,<br/>fais rire tout le monde.</h2>
+      <p>Les galères du gbaka, du maquis, du boulot et de la famille. Signé ou en Badeur anonyme.</p>
+    </div>
+    <div class="samples">
+      <div class="sample"><b>LeVraiZoba</b><p>Coupure de courant à 21h. Courant revient. Tout le quartier crie « ÉHHH » comme si on venait de marquer.</p><span>😂 3,4 k</span></div>
+      <div class="sample s2"><b>Badeur anonyme</b><p>J'ai dit « comme d'habitude » au maquis. C'était ma première fois là-bas.</p><span>😂 512</span></div>
+    </div>
+  </aside>`;
+
 function shell() {
   const u = S.me();
   return `
   <div class="shell">
-    <nav class="rail" aria-label="Navigation principale">
-      <a class="brand" href="#/">${logo(34)}<span>je bade</span></a>
-      <a class="nav" data-nav="feed" href="#/">${icon('house')}<span>Fil</span></a>
-      <a class="nav" data-nav="notifications" href="#/notifications">${icon('bell')}<span>Notifications</span><b class="dot" hidden></b></a>
-      <a class="nav" data-nav="profile" href="#/profile">${icon('user')}<span>Profil</span></a>
-      <a class="nav" data-nav="settings" href="#/settings">${icon('settings')}<span>Paramètres</span></a>
-      <a class="btn btn-primary btn-block cta" href="#/compose">${icon('plus')} Bader</a>
-      <a class="me" href="#/profile" data-me>${avatar(u, 40)}<span><b>${esc(u?.pseudo ?? '')}</b><br/><span class="t-meta">@${esc(u?.pseudo ?? '')}</span></span></a>
-    </nav>
-    <main class="main" id="view"></main>
-    <aside class="aside" aria-label="Suggestions">
-      <div class="card">
-        <h2 class="t-heading">Badings du moment</h2>
-        <div data-trends></div>
+    <header class="webbar">
+      <div class="webbar-in">
+        <a class="brand" href="#/">${logo(32)}<span>je bade</span></a>
+        <nav class="webnav" aria-label="Navigation principale">
+          <a data-nav="feed" href="#/">${icon('house')}<span>Fil</span></a>
+          <a data-nav="notifications" href="#/notifications">${icon('bell')}<span>Notifications</span><b class="dot" hidden></b></a>
+          <a data-nav="profile" href="#/profile">${icon('user')}<span>Profil</span></a>
+        </nav>
+        <div class="webbar-actions">
+          <button class="btn btn-secondary btn-sm" data-install hidden>${icon('download')}<span>Installer l'app</span></button>
+          <a class="btn btn-primary btn-sm" href="#/compose">${icon('plus')} Bader</a>
+          <a class="icon-btn" data-nav="settings" href="#/settings" aria-label="Paramètres">${icon('settings')}</a>
+          <a class="me-chip" href="#/profile" data-me-chip aria-label="Mon profil">${avatar(u, 36)}</a>
+        </div>
       </div>
-      <div class="card">
-        <h2 class="t-heading">Je Bade sur ton téléphone</h2>
-        <p class="muted">Notifications en direct, Dynamic Island et partage en un geste sur l'app iOS et Android.</p>
-      </div>
-      <footer>Je Bade · une app ORIVERSE<br/>Créé par <a href="https://monportfolio-blush-phi.vercel.app/" target="_blank" rel="noopener">Jean Emmanuel Ahossi</a> · <a href="#/privacy">Confidentialité</a></footer>
-    </aside>
+    </header>
+    <div class="layout">
+      <aside class="left" aria-label="Mon compte">
+        <div class="card me-card" data-me-card></div>
+        <nav class="card side-links" aria-label="Raccourcis">
+          <a href="#/profile">${icon('user')}<span>Mes badings</span></a>
+          <a href="#/notifications">${icon('bell')}<span>Notifications</span><b class="dot" hidden></b></a>
+          <a href="#/settings">${icon('settings')}<span>Paramètres</span></a>
+          <a href="#/privacy">${icon('lock')}<span>Confidentialité</span></a>
+        </nav>
+      </aside>
+      <main class="main" id="view"></main>
+      <aside class="aside" aria-label="Suggestions">
+        <div class="card">
+          <h2 class="t-heading">Badings du moment</h2>
+          <div data-trends></div>
+        </div>
+        <div class="card install-card" data-install-card hidden>
+          <h2 class="t-heading">Installe Je Bade</h2>
+          <p class="muted">Une vraie app sur ton téléphone ou ton ordinateur : ouverture instantanée, notifications, et les liens partagés s'ouvrent directement dedans.</p>
+          <button class="btn btn-primary btn-sm" data-install>${icon('download')} Installer</button>
+        </div>
+        <footer>Je Bade · une app ORIVERSE<br/>Créé par <a href="https://monportfolio-blush-phi.vercel.app/" target="_blank" rel="noopener">Jean Emmanuel Ahossi</a> · <a href="#/privacy">Confidentialité</a></footer>
+      </aside>
+    </div>
     <nav class="tabbar" aria-label="Onglets">
       <a data-nav="feed" href="#/">${icon('house')}<span>Fil</span></a>
       <div class="bader"><a href="#/compose">${icon('plus')}Bader</a></div>
@@ -119,10 +152,24 @@ function shell() {
   </div>`;
 }
 
+function meCard() {
+  const u = S.me(); if (!u) return '';
+  const mine = S.get().badings.filter((b) => b.authorId === S.ME && !b.deleted);
+  const laughs = mine.reduce((n, b) => n + (b.likes || 0), 0);
+  return `<a class="me-head" href="#/profile">${avatar(u, 56)}<span><b>${esc(u.pseudo)}</b><span class="t-meta">@${esc(u.pseudo)}</span></span></a>
+    <div class="me-stats"><span><b>${mine.length}</b>badings</span><span><b>${S.compact(laughs)}</b>rires</span></div>`;
+}
+
+function syncInstall() {
+  const show = canInstall();
+  document.querySelectorAll('[data-install]').forEach((b) => (b.hidden = !show));
+  document.querySelectorAll('[data-install-card]').forEach((c) => (c.hidden = !show));
+}
+
 function wireShell() {
   const refresh = () => {
     const n = S.unread();
-    document.querySelectorAll('.rail .dot').forEach((d) => { d.hidden = !n; d.textContent = n; });
+    document.querySelectorAll('.webnav .dot, .side-links .dot').forEach((d) => { d.hidden = !n; d.textContent = n; });
     const trends = $('[data-trends]');
     if (trends) {
       trends.innerHTML = S.feed().filter((b) => !b.rebadeOf).sort((a, b) => b.likes - a.likes).slice(0, 3).map((b) => {
@@ -130,12 +177,14 @@ function wireShell() {
         return `<div class="trend" data-go="/bading/${b.id}" role="link" tabindex="0"><span class="t-meta">${esc(name)} · 😂 ${S.compact(b.likes)}</span><span>${esc(b.text.slice(0, 80))}${b.text.length > 80 ? '…' : ''}</span></div>`;
       }).join('');
     }
-    const meEl = $('[data-me]');
-    if (meEl && S.me()) meEl.innerHTML = `${avatar(S.me(), 40)}<span><b>${esc(S.me().pseudo)}</b><br/><span class="t-meta">@${esc(S.me().pseudo)}</span></span>`;
+    const card = $('[data-me-card]'); if (card) card.innerHTML = meCard();
+    const chip = $('[data-me-chip]'); if (chip && S.me()) chip.innerHTML = avatar(S.me(), 36);
   };
   refresh();
+  syncInstall();
   S.subscribe(() => shellMounted && refresh());
   $('#app').addEventListener('click', (e) => {
+    if (e.target.closest('[data-install]')) { install(); return; }
     const t = e.target.closest('[data-go]');
     if (t && !e.target.closest('button, a')) go(t.dataset.go);
   });
@@ -163,6 +212,10 @@ function splash() {
     .to(el, { opacity: 0, duration: 0.25 }, '-=0.15');
 }
 
+onInstallChange(syncInstall);
+if (isStandalone()) document.documentElement.classList.add('standalone');
+consumeLaunchParams();
+registerSW();
 window.addEventListener('hashchange', () => { depth += 1; render(); });
 render();
 splash();

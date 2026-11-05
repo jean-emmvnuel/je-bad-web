@@ -22,7 +22,7 @@ export function profileView(root, { go }) {
     const joined = new Date(u.joinedAt ?? Date.now()).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
     return `
     <header class="topbar"><h1 class="t-heading" style="flex:1">${esc(u.pseudo)}</h1><a class="icon-btn" href="#/settings" aria-label="Paramètres">${icon('settings')}</a></header>
-    <section style="padding:16px;display:flex;flex-direction:column;gap:12px">
+    <section class="profile-hero" style="padding:16px;display:flex;flex-direction:column;gap:12px">
       <button data-avatar aria-label="Changer d'avatar" style="align-self:flex-start;position:relative;border-radius:50%">
         <span style="display:block;border:3px solid var(--bg);border-radius:50%">${avatar(u, 88)}</span>
         <span style="position:absolute;right:0;bottom:2px;width:30px;height:30px;border-radius:50%;background:var(--brand);border:3px solid var(--bg);display:grid;place-items:center;color:#fff">${icon('pencil').replace('class="i ', 'style="width:13px;height:13px;stroke-width:2.6" class="i ')}</span>
