@@ -33,7 +33,7 @@ const ART = [
 export function onboardingView(root, { go }) {
   root.innerHTML = `
   <section id="onb" aria-roledescription="carrousel">
-    <div class="top"><div class="logo"><span data-logo>${logo(30, '#fff')}</span><span data-fg>Je Bade</span></div><button class="t-label" data-skip data-fg style="min-height:44px">Passer</button></div>
+    <div class="top"><div class="logo"><span data-logo>${logo(30, '#fff')}</span><span data-fg>On Bade</span></div><button class="t-label" data-skip data-fg style="min-height:44px">Passer</button></div>
     <div class="track" data-track>
       ${SLIDES.map((s, i) => `<div class="slide" aria-label="Étape ${i + 1} sur 3">${ART[i]}<div class="copy"><h1 class="t-hero" style="color:${s.fg}">${s.title}</h1><p style="color:${s.sub};font-size:18px;line-height:1.45">${s.body}</p></div></div>`).join('')}
     </div>

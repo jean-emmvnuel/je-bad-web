@@ -88,7 +88,7 @@ function render() {
 // ─── Coquille web : barre du haut + 3 colonnes (ordinateur), onglets (mobile) ──
 const authPane = () => `
   <aside class="auth-brand" aria-hidden="true">
-    <a class="brand" href="#/">${logo(40, '#fff')}<span>je bade</span></a>
+    <a class="brand" href="#/">${logo(40, '#fff')}<span>on bade</span></a>
     <div class="pitch">
       <h2 class="t-hero">Raconte ce qui t'est arrivé,<br/>fais rire tout le monde.</h2>
       <p>Les galères du gbaka, du maquis, du boulot et de la famille. Signé ou en Badeur anonyme.</p>
@@ -105,7 +105,7 @@ function shell() {
   <div class="shell">
     <header class="webbar">
       <div class="webbar-in">
-        <a class="brand" href="#/">${logo(32)}<span>je bade</span></a>
+        <a class="brand" href="#/">${logo(32)}<span>on bade</span></a>
         <nav class="webnav" aria-label="Navigation principale">
           <a data-nav="feed" href="#/">${icon('house')}<span>Fil</span></a>
           <a data-nav="notifications" href="#/notifications">${icon('bell')}<span>Notifications</span><b class="dot" hidden></b></a>
@@ -136,11 +136,11 @@ function shell() {
           <div data-trends></div>
         </div>
         <div class="card install-card" data-install-card hidden>
-          <h2 class="t-heading">Installe Je Bade</h2>
+          <h2 class="t-heading">Installe On Bade</h2>
           <p class="muted">Une vraie app sur ton téléphone ou ton ordinateur : ouverture instantanée, notifications, et les liens partagés s'ouvrent directement dedans.</p>
           <button class="btn btn-primary btn-sm" data-install>${icon('download')} Installer</button>
         </div>
-        <footer>Je Bade · une app ORIVERSE<br/>Créé par <a href="https://jeanemmanuel-portfolio-gamma.vercel.app/" target="_blank" rel="noopener">Jean Emmanuel Ahossi</a> · <a href="#/privacy">Confidentialité</a></footer>
+        <footer>On Bade · une app ORIVERSE<br/>Créé par <a href="https://jeanemmanuel-portfolio-gamma.vercel.app/" target="_blank" rel="noopener">Jean Emmanuel Ahossi</a> · <a href="#/privacy">Confidentialité</a></footer>
       </aside>
     </div>
     <nav class="tabbar" aria-label="Onglets">

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src=".github/assets/banner.svg" alt="Je Bade — raconte ce qui t'est arrivé, fais rire tout le monde" width="100%"/>
+<img src=".github/assets/banner.svg" alt="On Bade — raconte ce qui t'est arrivé, fais rire tout le monde" width="100%"/>
 
 <br/>
 
@@ -13,9 +13,9 @@
 
 ---
 
-## 😂 Je Bade, version web
+## 😂 On Bade, version web
 
-**Je Bade** est le réseau social où l'on raconte ce qui nous est arrivé… pour faire rire tout le monde. En nouchi, **« bader »** veut dire faire des blagues, amuser la galerie : un **bading** est une histoire drôle vécue, publiée **signée ou en « Badeur anonyme »**.
+**On Bade** est le réseau social où l'on raconte ce qui nous est arrivé… pour faire rire tout le monde. En nouchi, **« bader »** veut dire faire des blagues, amuser la galerie : un **bading** est une histoire drôle vécue, publiée **signée ou en « Badeur anonyme »**.
 
 > **Ici, la seule règle, c'est qu'il n'y a pas de règle.** Enfin… presque : on rit des situations, jamais des personnes.
 
@@ -39,7 +39,7 @@ Ce dépôt est la **version web** de l'app mobile ([jean-emmvnuel/jebade](https:
 | 🔔 | **Notifications du navigateur** (rires, réponses) |
 | ⚙️ | Paramètres : pseudo, mentions, blocages, badge vérifié, **demande de suppression du compte**, copie des données, confidentialité |
 | 💻 | **Vrai rendu web** sur ordinateur : barre de navigation en haut, 3 colonnes (mon compte · fil en cartes · badings du moment), inscription en écran partagé ; barre d'onglets sur mobile |
-| 📲 | **PWA installable** (Android, iPhone, ordinateur) : hors ligne, raccourcis « Bader » et « Notifications », partage de texte vers Je Bade |
+| 📲 | **PWA installable** (Android, iPhone, ordinateur) : hors ligne, raccourcis « Bader » et « Notifications », partage de texte vers On Bade |
 | 🔗 | **Liens dynamiques** `…/?b=<id>` : ils s'ouvrent dans l'app installée, sinon sur le site, directement sur le bading |
 | ♿ | Clavier, focus visibles, libellés ARIA, `prefers-reduced-motion` respecté |
 
@@ -77,7 +77,7 @@ Les liens partagés ont la forme `…/?b=<id>` (l'ancienne forme `…/#/b/<id>` 
 
 ## 📲 PWA
 
-- `manifest.webmanifest` : nom, icônes, raccourcis, `share_target` (partager un texte depuis une autre app ouvre « Nouveau bading »), `launch_handler` + `handle_links` (un lien Je Bade ouvre l'app déjà installée).
+- `manifest.webmanifest` : nom, icônes, raccourcis, `share_target` (partager un texte depuis une autre app ouvre « Nouveau bading »), `launch_handler` + `handle_links` (un lien On Bade ouvre l'app déjà installée).
 - `sw.js` : coquille en cache (hors ligne, ouverture instantanée), polices et GSAP en cache, clic sur les notifications. **Change `VERSION` dans `sw.js` à chaque mise en ligne.**
 - `js/pwa.js` : enregistrement du service worker, bouton « Installer l'app » (invite native sur Chrome/Edge/Android, mode d'emploi sur iPhone), lecture des liens `?b=` et des partages.
 - L'installation demande **HTTPS** (ou `localhost`).
@@ -86,6 +86,6 @@ Les liens partagés ont la forme `…/?b=<id>` (l'ancienne forme `…/#/b/<id>` 
 
 <div align="center">
 
-**Je Bade** · une app **ORIVERSE** · Créée par **Jean Emmanuel Ahossi** — [portfolio](https://jeanemmanuel-portfolio-gamma.vercel.app/)
+**On Bade** · une app **ORIVERSE** · Créée par **Jean Emmanuel Ahossi** — [portfolio](https://jeanemmanuel-portfolio-gamma.vercel.app/)
 
 </div>

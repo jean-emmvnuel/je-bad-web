@@ -39,7 +39,7 @@ export function settingsView(root, { go, back }) {
         </div></div>
         <div class="section"><h3>Session</h3><div class="group">${row('logout', 'logOut', 'Se déconnecter')}</div></div>
         <a class="credit" href="https://jeanemmanuel-portfolio-gamma.vercel.app/" target="_blank" rel="noopener" aria-label="Créé par Jean Emmanuel Ahossi, ouvrir son portfolio">
-          ${logo(28)}<span class="t-small" style="color:var(--text-3)">Je Bade · ORIVERSE</span>
+          ${logo(28)}<span class="t-small" style="color:var(--text-3)">On Bade · ORIVERSE</span>
           <span>Créé par <b style="color:var(--text)">Jean Emmanuel Ahossi</b></span>
           <span class="t-small" style="color:var(--brand-ink);text-decoration:underline">jeanemmanuel-portfolio-gamma.vercel.app</span>
         </a>

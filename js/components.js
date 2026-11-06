@@ -10,7 +10,7 @@ const PUBLIC_HOST = 'https://jebade.app';
  */
 export const badingLink = (id) => (location.hostname.endsWith('jebade.app') ? `${PUBLIC_HOST}/b/${id}` : badingUrl(id));
 const teaser = (t) => (t.length > 140 ? `${t.slice(0, 140).trimEnd()}…` : t);
-const shareText = (b, url) => `${b.text ? `« ${teaser(b.text)} »\n\n` : ''}😂 Lis la suite sur Je Bade : ${url}`;
+const shareText = (b, url) => `${b.text ? `« ${teaser(b.text)} »\n\n` : ''}😂 Lis la suite sur On Bade : ${url}`;
 
 // ─── Carte ────────────────────────────────────────────────
 function author(b, small = false) {
@@ -145,7 +145,7 @@ export function openShare(target) {
         <div style="display:flex;align-items:center;gap:10px">${avatar(b.anonymous ? null : user, 30)}<b style="${b.anonymous ? 'color:var(--text-2)' : ''}">${esc(name)}</b></div>
         <p style="font-weight:600;font-size:18px;line-height:25px;display:-webkit-box;-webkit-line-clamp:9;-webkit-box-orient:vertical;overflow:hidden">${esc(b.text)}</p>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 4px 0;color:#fff"><span style="display:flex;align-items:center;gap:6px;font-family:var(--font-display);font-weight:800;font-size:17px">${logo(22, '#fff')} je bade</span><span class="t-small" style="color:#F1E4FF">jebade.app</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 4px 0;color:#fff"><span style="display:flex;align-items:center;gap:6px;font-family:var(--font-display);font-weight:800;font-size:17px">${logo(22, '#fff')} on bade</span><span class="t-small" style="color:#F1E4FF">jebade.app</span></div>
     </div>
     <div style="display:flex;justify-content:space-between">
       ${T('wa', 'WhatsApp', '#25D366', icon('message'))}
@@ -196,7 +196,7 @@ async function renderShareImage(b) {
   const logoImg = new Image(); logoImg.src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="#fff"><path d="M40 46a22 22 0 0 1 44 0V214a22 22 0 0 1-44 0Z"/><path fill-rule="evenodd" d="M68 158A78 78 0 1 0 224 158A78 78 0 1 0 68 158Z M104 146H188A42 42 0 0 1 104 146Z"/></svg>`)}`;
   await logoImg.decode().catch(() => {});
   g.drawImage(logoImg, 70, H - 160, 90, 90);
-  g.fillStyle = '#fff'; g.font = '800 64px "Bricolage Grotesque"'; g.fillText('je bade', 175, H - 95);
+  g.fillStyle = '#fff'; g.font = '800 64px "Bricolage Grotesque"'; g.fillText('on bade', 175, H - 95);
   g.fillStyle = '#F1E4FF'; g.font = '500 40px Figtree'; g.textAlign = 'right'; g.fillText('jebade.app', W - 70, H - 100);
   return new Promise((r) => c.toBlob(r, 'image/png'));
 }

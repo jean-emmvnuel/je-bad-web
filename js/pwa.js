@@ -1,4 +1,4 @@
-// PWA : service worker, installation, liens dynamiques et partage vers Je Bade.
+// PWA : service worker, installation, liens dynamiques et partage vers On Bade.
 import * as S from './store.js';
 import { sheet, toast, icon } from './ui.js';
 
@@ -13,7 +13,7 @@ export const canInstall = () => !isStandalone() && (!!deferred || isIOS());
 export const onInstallChange = (fn) => (listeners.add(fn), () => listeners.delete(fn));
 
 addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; emit(); });
-addEventListener('appinstalled', () => { deferred = null; emit(); toast('Je Bade est installée 🎉'); });
+addEventListener('appinstalled', () => { deferred = null; emit(); toast('On Bade est installée 🎉'); });
 
 export async function install() {
   if (deferred) {
@@ -25,13 +25,13 @@ export async function install() {
   }
   if (isIOS()) {
     sheet({
-      title: 'Installer Je Bade',
+      title: 'Installer On Bade',
       html: `<div class="pad">
         <p class="muted">Sur iPhone, l'installation se fait depuis Safari :</p>
         <ol class="steps">
           <li>Touche le bouton <b>Partager</b> ${icon('share')} en bas de Safari.</li>
           <li>Choisis <b>Sur l'écran d'accueil</b>.</li>
-          <li>Touche <b>Ajouter</b> : Je Bade s'ouvre comme une vraie app.</li>
+          <li>Touche <b>Ajouter</b> : On Bade s'ouvre comme une vraie app.</li>
         </ol>
       </div>`,
     });
@@ -45,7 +45,7 @@ export const badingUrl = (id) => `${location.origin}${location.pathname.replace(
 /**
  * À l'ouverture : transforme les paramètres d'URL en route.
  *  - `?b=<id>`               → lien partagé d'un bading
- *  - `?text=…&url=…&title=…` → texte partagé depuis une autre app vers Je Bade (share_target)
+ *  - `?text=…&url=…&title=…` → texte partagé depuis une autre app vers On Bade (share_target)
  */
 export function consumeLaunchParams() {
   const q = new URLSearchParams(location.search);
@@ -66,14 +66,14 @@ export function registerSW() {
       reg.addEventListener('updatefound', () => {
         const sw = reg.installing;
         sw?.addEventListener('statechange', () => {
-          if (sw.state === 'activated' && hadController) toast('Nouvelle version de Je Bade disponible : recharge la page.');
+          if (sw.state === 'activated' && hadController) toast('Nouvelle version de On Bade disponible : recharge la page.');
         });
       });
     }).catch(() => {});
   });
   // Clic sur une notification alors que l'app est déjà ouverte.
   navigator.serviceWorker.addEventListener('message', (e) => { if (e.data?.type === 'navigate') location.hash = `#${e.data.path}`; });
-  // App installée déjà ouverte + clic sur un lien Je Bade (launch_handler: navigate-existing).
+  // App installée déjà ouverte + clic sur un lien On Bade (launch_handler: navigate-existing).
   if ('launchQueue' in window) {
     window.launchQueue.setConsumer((params) => {
       if (!params.targetURL) return;

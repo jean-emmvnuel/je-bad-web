@@ -1,4 +1,4 @@
-// Lucide icons (ISC licence) — only the ones Je Bade uses.
+// Lucide icons (ISC licence) — only the ones On Bade uses.
 export const ICONS = {
  "arrowLeft": "<path d=\"m12 19-7-7 7-7\"/><path d=\"M19 12H5\"/>",
  "atSign": "<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8\"/>",

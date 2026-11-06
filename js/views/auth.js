@@ -105,7 +105,7 @@ export function pseudoView(root, { go, back }) {
        <ul style="display:flex;flex-direction:column;gap:8px">${CHARTE.map((c) => `<li>${c}</li>`).join('')}</ul>
        <button class="check" role="checkbox" aria-checked="false" data-accept><span class="box">${icon('check')}</span><span class="t-label">J'ai 18 ans ou plus, j'accepte la charte et la <a href="#/privacy" data-privacy>politique de confidentialité</a></span></button>
      </div>`,
-    `<button class="btn btn-primary btn-block" data-enter disabled>Entrer dans Je Bade</button>`);
+    `<button class="btn btn-primary btn-block" data-enter disabled>Entrer dans On Bade</button>`);
   enter(root);
   $('[data-back]', root).onclick = () => back('/auth/signup');
   const input = $('#pseudo', root), hint = $('[data-hint]', root), box = $('[data-box]', root), stateEl = $('[data-state]', root), accept = $('[data-accept]', root), enterBtn = $('[data-enter]', root);

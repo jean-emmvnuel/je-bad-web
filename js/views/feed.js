@@ -10,7 +10,7 @@ const LABELS = { pull: 'Tire pour voir les nouveaux badings', release: 'Lâche, 
 export function feedView(root, { go }) {
   root.innerHTML = `
     <header class="topbar" data-top>
-      <div class="logo only-mobile">${logo(28)}<span>Je Bade</span></div>
+      <div class="logo only-mobile">${logo(28)}<span>On Bade</span></div>
       <h1 class="t-heading" style="flex:1" data-desk-title>Fil d'actualité</h1>
       <button class="icon-btn only-mobile" data-install-m aria-label="Installer l'app" hidden>${icon('download')}</button>
       <a class="icon-btn only-mobile" href="#/notifications" aria-label="Notifications">${icon('bell')}<span class="badge" data-badge hidden></span></a>
