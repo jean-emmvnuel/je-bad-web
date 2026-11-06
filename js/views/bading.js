@@ -1,5 +1,6 @@
 import * as S from '../store.js';
 import { $, avatar, closeSheet, esc, icon, reduceMotion, rich, sheet, sheetItem, toast, verified } from '../ui.js';
+import { project, spring, velocityTracker } from '../motion.js';
 import { actionsRow, badingImage, card, confirmSheet, wireActions } from '../components.js';
 import { STICKERS, THEMES, sticker as builtin, stickerHtml } from '../stickers.js';
 import { ACCEPT, openCropper, readImageFile } from '../cropper.js';
@@ -198,14 +199,7 @@ export function badingView(root, { params, query, go, back }) {
     const c = S.addComment(id, ta.value, parent ?? undefined); if (!c) { cerr.textContent = 'Ce commentaire contient un mot refusé par la charte.'; cerr.hidden = false; return; }
     ta.value = ''; ta.oninput(); posted(c);
   };
-  $('[data-zoom-img]', root)?.addEventListener('click', () => {
-    const lb = document.createElement('div'); lb.className = 'lightbox'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-label', 'Image en grand');
-    lb.innerHTML = `<img src="${b.image.src}" alt="Image du bading"/><button class="icon-btn" aria-label="Fermer">${icon('x')}</button>`;
-    const close = () => { removeEventListener('keydown', onKey); lb.remove(); };
-    const onKey = (e) => { if (e.key === 'Escape') close(); };
-    lb.onclick = close; addEventListener('keydown', onKey); document.body.appendChild(lb);
-    if (!reduceMotion()) gsap.from(lb.querySelector('img'), { scale: 0.92, opacity: 0, duration: 0.3, ease: 'expo.out' });
-  });
+  $('[data-zoom-img]', root)?.addEventListener('click', () => openLightbox(b.image.src));
   if (query.focus === 'comment') setTimeout(() => ta.focus(), 300);
 
   if (!reduceMotion()) gsap.from('[data-hero] > *', { y: 12, opacity: 0, duration: 0.4, stagger: 0.04, ease: 'expo.out' });
@@ -218,4 +212,57 @@ export function badingView(root, { params, query, go, back }) {
     if (n !== lastCount) { lastCount = n; if (tab === 'comments') panel(); }
   });
   return () => { unsub(); removeEventListener('resize', layoutRails); };
+}
+
+/**
+ * Image en grand. Elle suit le doigt dans tous les sens, rétrécit et laisse voir le fond en s'éloignant ;
+ * relâchée avec assez d'élan, elle part dans la direction du geste, sinon elle revient au centre.
+ * Un simple toucher ferme aussi.
+ */
+function openLightbox(src) {
+  const lb = document.createElement('div'); lb.className = 'lightbox'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-label', 'Image en grand');
+  lb.innerHTML = `<img src="${src}" alt="Image du bading" draggable="false"/><button class="icon-btn" aria-label="Fermer">${icon('x')}</button>`;
+  const img = lb.querySelector('img');
+  let anim = null, pos = { x: 0, y: 0 }, start = null, moved = false, vx = null, vy = null;
+  const paint = ({ x, y }) => {
+    pos = { x, y };
+    const d = Math.min(1, Math.hypot(x, y) / (innerHeight * 0.6));
+    img.style.transform = `translate(${x}px, ${y}px) scale(${1 - d * 0.25})`;
+    lb.style.backgroundColor = `rgba(10, 9, 9, ${0.94 * (1 - d)})`;
+  };
+  const close = (velocity) => {
+    removeEventListener('keydown', onKey); anim?.forEach((a) => a.stop());
+    if (reduceMotion() || !velocity) { gsap.to(lb, { opacity: 0, duration: 0.16, onComplete: () => lb.remove() }); return; }
+    // Part dans la direction du geste, à sa vitesse.
+    const speed = Math.hypot(velocity.x, velocity.y) || 1, dist = innerHeight;
+    const tx = pos.x + (velocity.x / speed) * dist, ty = pos.y + (velocity.y / speed) * dist;
+    let cur = { ...pos };
+    anim = [spring(pos.x, tx, { velocity: velocity.x, response: 0.3, onUpdate: (v) => { cur.x = v; paint(cur); } }), spring(pos.y, ty, { velocity: velocity.y, response: 0.3, onUpdate: (v) => { cur.y = v; paint(cur); }, onDone: () => lb.remove() })];
+  };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  lb.addEventListener('pointerdown', (e) => {
+    anim?.forEach((a) => a.stop());
+    start = { x: e.clientX - pos.x, y: e.clientY - pos.y, id: e.pointerId }; moved = false;
+    vx = velocityTracker(); vy = velocityTracker(); vx.add(pos.x); vy.add(pos.y);
+    lb.setPointerCapture(e.pointerId);
+  });
+  lb.addEventListener('pointermove', (e) => {
+    if (!start || e.pointerId !== start.id) return;
+    const x = e.clientX - start.x, y = e.clientY - start.y;
+    if (!moved && Math.hypot(x - pos.x, y - pos.y) < 6) return;
+    moved = true; paint({ x, y }); vx.add(x); vy.add(y);
+  });
+  lb.addEventListener('pointerup', (e) => {
+    if (!start || e.pointerId !== start.id) return;
+    start = null;
+    if (!moved) return close();
+    const v = { x: vx.get(), y: vy.get() };
+    const proj = Math.hypot(pos.x + project(v.x), pos.y + project(v.y));
+    if (proj > innerHeight * 0.25) return close(v);
+    // Pas assez d'élan : retour au centre, axe par axe, en gardant la vitesse.
+    let cur = { ...pos };
+    anim = [spring(pos.x, 0, { velocity: v.x, damping: 0.85, response: 0.3, onUpdate: (n) => { cur.x = n; paint(cur); } }), spring(pos.y, 0, { velocity: v.y, damping: 0.85, response: 0.3, onUpdate: (n) => { cur.y = n; paint(cur); } })];
+  });
+  addEventListener('keydown', onKey); document.body.appendChild(lb);
+  if (!reduceMotion()) gsap.from(img, { scale: 0.92, opacity: 0, duration: 0.3, ease: 'expo.out', clearProps: 'opacity' });
 }

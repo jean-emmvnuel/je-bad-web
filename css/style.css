@@ -546,7 +546,7 @@ body.scrolled .topbar { border-bottom-color: rgba(255, 255, 255, 0.06); box-shad
 .sheet { box-shadow: 0 -12px 40px -12px rgba(0, 0, 0, 0.6); border-top: 1px solid rgba(255, 255, 255, 0.06); overscroll-behavior: contain; will-change: transform; }
 .sheet .grab { width: 36px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.22); margin: 2px auto 14px; }
 .sheet.dragging { cursor: grabbing; user-select: none; }
-.scrim { backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.scrim { backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px); }
 @media (min-width: 900px) { .webbar { background: rgba(26, 25, 25, 0.72); backdrop-filter: blur(20px) saturate(170%); -webkit-backdrop-filter: blur(20px) saturate(170%); border-bottom-color: rgba(255, 255, 255, 0.06); } }
 
 /* 3. Typographie : interlettrage selon la taille (serré en grand, légèrement ouvert en petit). */
@@ -571,3 +571,9 @@ body.scrolled .topbar { border-bottom-color: rgba(255, 255, 255, 0.06); box-shad
   .card-row.bub, .pf-card, .pf-tabs, .sheet { border-color: var(--text-3); }
   .t-meta, .t-small, .muted { color: var(--text-2); }
 }
+
+/* Image en grand : on peut la saisir et la jeter. */
+.lightbox { touch-action: none; cursor: grab; transition: none; }
+.lightbox:active { cursor: grabbing; }
+.lightbox img { will-change: transform; user-select: none; -webkit-user-drag: none; }
+#view { will-change: auto; }

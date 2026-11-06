@@ -47,6 +47,10 @@ describe('Élan et bords', () => {
   });
   it('vitesse du geste mesurée sur les derniers mouvements', () => {
     const t = velocityTracker(); t.add(0, 0); t.add(10, 10); t.add(30, 20);
-    expect(t.get()).toBe(1500);
+    expect(t.get(20)).toBe(1500);
+  });
+  it('si le doigt s’arrête avant de lâcher, la vitesse retombe à zéro', () => {
+    const t = velocityTracker(); t.add(0, 0); t.add(30, 20);
+    expect(t.get(300)).toBe(0);
   });
 });

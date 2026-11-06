@@ -47,6 +47,9 @@ export function toast(msg) {
 // Mobile : la feuille suit le doigt 1:1, résiste vers le haut, et se ferme selon l'élan du geste
 // (projection), avec un ressort qui reprend la vitesse du doigt. Ordinateur : fenêtre centrée.
 let openSheet = null;
+// Dernier élément touché : Safari ne donne pas le focus aux boutons cliqués, on ne peut donc pas s'y fier.
+const lastPress = { el: null, at: -1e9 };
+addEventListener('pointerdown', (e) => { lastPress.el = e.target; lastPress.at = performance.now(); }, true);
 const sheetY = (panel, y) => { panel.style.transform = `translateX(-50%) translateY(${y}px)`; };
 export function sheet({ title = '', html, onMount }) {
   closeSheet(true);
@@ -57,7 +60,12 @@ export function sheet({ title = '', html, onMount }) {
   const state = { panel, scrim, desktop, anim: null, onKey: (e) => e.key === 'Escape' && closeSheet() };
   if (desktop || still) {
     gsap.fromTo(scrim, { opacity: 0 }, { opacity: 1, duration: 0.25 });
-    if (desktop) gsap.fromTo(panel, { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.3, ease: 'expo.out' });
+    if (desktop) {
+      // La fenêtre naît du bouton qui l'a ouverte (origine spatiale), et y retourne à la fermeture.
+      const t = (performance.now() - lastPress.at < 1500 ? lastPress.el : document.activeElement)?.closest?.('button, a, [role="button"]'), pr = panel.getBoundingClientRect();
+      if (t && t !== document.body) { const r = t.getBoundingClientRect(); state.origin = `${r.left + r.width / 2 - pr.left}px ${r.top + r.height / 2 - pr.top}px`; }
+      gsap.fromTo(panel, { opacity: 0, scale: still ? 1 : 0.85, transformOrigin: state.origin ?? '50% 50%' }, { opacity: 1, scale: 1, duration: 0.32, ease: 'expo.out' });
+    }
     else gsap.fromTo(panel, { opacity: 0 }, { opacity: 1, duration: 0.2 });
   } else {
     const h = panel.offsetHeight;
@@ -107,7 +115,7 @@ function dragToDismiss(state) {
 }
 export function closeSheet(instant = false, velocity = 0) {
   if (!openSheet) return;
-  const { panel, scrim, onKey, desktop, anim } = openSheet; openSheet = null;
+  const { panel, scrim, onKey, desktop, anim, origin } = openSheet; openSheet = null;
   document.removeEventListener('keydown', onKey);
   const root = $('#sheet-root');
   anim?.stop();
@@ -115,7 +123,7 @@ export function closeSheet(instant = false, velocity = 0) {
   const done = () => { if (root.contains(panel)) root.innerHTML = ''; };
   if (desktop || reduceMotion()) {
     gsap.to(scrim, { opacity: 0, duration: 0.18 });
-    gsap.to(panel, desktop ? { opacity: 0, scale: 0.97, duration: 0.16, onComplete: done } : { opacity: 0, duration: 0.16, onComplete: done });
+    gsap.to(panel, desktop ? { opacity: 0, scale: reduceMotion() ? 1 : 0.85, transformOrigin: origin ?? '50% 50%', duration: 0.18, ease: 'power2.in', onComplete: done } : { opacity: 0, duration: 0.16, onComplete: done });
     return;
   }
   // Même chemin qu'à l'ouverture (vers le bas), en gardant la vitesse du doigt.

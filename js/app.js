@@ -1,5 +1,6 @@
 import * as S from './store.js';
 import { $, esc, icon, logo, avatar, reduceMotion, closeSheet } from './ui.js';
+import { project, spring, velocityTracker } from './motion.js';
 import { registerSW, consumeLaunchParams, canInstall, install, onInstallChange, isStandalone } from './pwa.js';
 import { onboardingView } from './views/onboarding.js';
 import { signupView, pseudoView } from './views/auth.js';
@@ -16,13 +17,13 @@ const routes = [
   { path: /^\/onboarding$/, view: onboardingView, bare: true, public: true },
   { path: /^\/auth\/signup$/, view: signupView, bare: true, public: true },
   { path: /^\/auth\/pseudo$/, view: pseudoView, bare: true, public: true },
-  { path: /^\/privacy$/, view: privacyView, public: true },
+  { path: /^\/privacy$/, view: privacyView, public: true, level: 2 },
   { path: /^\/$/, view: feedView, nav: 'feed' },
-  { path: /^\/bading\/([\w-]+)$/, view: badingView, keys: ['id'] },
-  { path: /^\/compose$/, view: composeView, nav: 'compose' },
+  { path: /^\/bading\/([\w-]+)$/, view: badingView, keys: ['id'], level: 2 },
+  { path: /^\/compose$/, view: composeView, nav: 'compose', modal: true },
   { path: /^\/profile$/, view: profileView, nav: 'profile' },
   { path: /^\/notifications$/, view: notificationsView, nav: 'notifications' },
-  { path: /^\/settings$/, view: settingsView, nav: 'settings' },
+  { path: /^\/settings$/, view: settingsView, nav: 'settings', level: 2 },
 ];
 
 export function go(path, { replace = false } = {}) {
@@ -83,6 +84,59 @@ function render() {
   view.innerHTML = '';
   window.scrollTo(0, 0);
   cleanup = route.view(view, { params, query, go, back }) || null;
+  transition(view, route);
+  edgeBack(view, route);
+}
+
+// ─── Transitions entre écrans (apple-design : même chemin à l'aller et au retour) ───
+// Aller vers un détail : l'écran arrive de la droite. Retour : il revient de la gauche.
+// Écrire (compose) : monte du bas. Changer d'onglet : simple fondu.
+let lastRoute = null, viewAnim = null;
+const levelOf = (r) => (r?.modal ? 3 : r?.level ?? 1);
+function transition(view, route) {
+  const prev = lastRoute; lastRoute = route;
+  viewAnim?.stop(); view.style.transform = ''; view.style.opacity = '';
+  if (!prev || route.bare || prev.bare) return;
+  if (reduceMotion()) { gsap.fromTo(view, { opacity: 0 }, { opacity: 1, duration: 0.18, clearProps: 'opacity' }); return; }
+  const a = levelOf(prev), b = levelOf(route);
+  if (a === b) { gsap.fromTo(view, { opacity: 0 }, { opacity: 1, duration: 0.2, clearProps: 'opacity' }); return; }
+  const axis = route.modal || prev.modal ? 'Y' : 'X';
+  const from = axis === 'Y' ? (b > a ? 48 : -24) : b > a ? 56 : -40; // le retour suit le chemin inverse
+  view.style.opacity = '0';
+  viewAnim = spring(from, 0, { damping: 1, response: 0.38, onUpdate: (v) => {
+    view.style.transform = Math.abs(v) < 0.5 ? '' : `translate${axis}(${v}px)`;
+    view.style.opacity = String(Math.min(1, 1 - Math.abs(v) / Math.abs(from) + 0.25));
+  }, onDone: () => { view.style.transform = ''; view.style.opacity = ''; } });
+}
+
+// ─── Glisser depuis le bord gauche pour revenir (app installée sur iPhone, qui n'a pas de bouton retour) ───
+function edgeBack(view, route) {
+  if (levelOf(route) !== 2 || !isStandalone() || matchMedia('(min-width: 900px)').matches) return;
+  let start = null, dragging = false, vt = null, x = 0;
+  const w = () => innerWidth;
+  const set = (v) => { x = v; view.style.transform = `translateX(${v}px)`; view.style.boxShadow = v > 0 ? '-12px 0 32px rgba(0,0,0,0.5)' : ''; };
+  view.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'touch' || e.clientX > 24) return;
+    viewAnim?.stop(); start = { x: e.clientX, y: e.clientY, id: e.pointerId }; dragging = false; vt = velocityTracker(); vt.add(0);
+  });
+  view.addEventListener('pointermove', (e) => {
+    if (!start || e.pointerId !== start.id) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if (!dragging) {
+      if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { start = null; return; } // c'était un défilement
+      if (dx < 10) return;
+      dragging = true; view.setPointerCapture(e.pointerId);
+    }
+    set(Math.max(0, dx - 10)); vt.add(x);
+  });
+  const end = (e) => {
+    if (!start || e.pointerId !== start.id) return;
+    start = null; if (!dragging) return; dragging = false;
+    const v = vt.get();
+    if (x + project(v) > w() / 2) viewAnim = spring(x, w(), { velocity: v, damping: 1, response: 0.3, onUpdate: set, onDone: () => back('/') });
+    else viewAnim = spring(x, 0, { velocity: v, damping: 1, response: 0.3, onUpdate: set, onDone: () => { view.style.transform = ''; view.style.boxShadow = ''; } });
+  };
+  view.addEventListener('pointerup', end); view.addEventListener('pointercancel', end);
 }
 
 // ─── Coquille web : barre du haut + 3 colonnes (ordinateur), onglets (mobile) ──

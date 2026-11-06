@@ -34,7 +34,8 @@ export function velocityTracker() {
   const pts = [];
   return {
     add(y, t = performance.now()) { pts.push({ y, t }); while (pts.length > 2 && t - pts[0].t > 100) pts.shift(); },
-    get() { if (pts.length < 2) return 0; const a = pts[0], b = pts.at(-1); return b.t === a.t ? 0 : ((b.y - a.y) / (b.t - a.t)) * 1000; },
+    // Si le doigt s'est arrêté avant de lâcher, la vitesse retombe à zéro (on ne garde que les 100 dernières ms).
+    get(now = performance.now()) { const recent = pts.filter((p) => now - p.t <= 100); if (recent.length < 2) return 0; const a = recent[0], b = recent.at(-1); return b.t === a.t ? 0 : ((b.y - a.y) / (b.t - a.t)) * 1000; },
   };
 }
 
