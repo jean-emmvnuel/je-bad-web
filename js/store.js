@@ -5,6 +5,9 @@ const min = 60_000, h = 60 * min, d = 24 * h;
 export const ME = 'me';
 
 export const RULES = { minLength: 10, maxLength: 1000, captionMax: 280, myStickersMax: 50, opinionMax: 280, commentMax: 500, dailyLimit: 20, maxMentions: 5, badge: { activeDays: 30, minLaughs: 1000 }, badgeRetryDays: 30, deletionDays: 30 };
+/** Identifiant unique, même pour deux actions dans la même milliseconde. */
+let seq = 0;
+export const uid = (prefix) => `${prefix}${Date.now().toString(36)}${(seq++).toString(36)}`;
 const BANNED = ['connard', 'pute', 'nègre', 'tuer'];
 
 function seed() {
@@ -81,7 +84,9 @@ if (state.v === 2) { const s = seed(); state.v = 3; state.customStickers = s.cus
 if (state.v === 3) { state.v = 4; Object.values(state.users).forEach((u) => delete u.avatar); if (state.session?.user) delete state.session.user.avatar; }
 // v4 → v5 : compteur de vues sur chaque bading.
 if (state.v === 4) { state.v = 5; state.badings.forEach((b) => { if (b.views == null) b.views = Math.round((b.likes || 0) * 6.3 + (b.authorId === ME ? 0 : 41)); }); }
-if (state.v !== 3) state = seed();
+export const DATA_VERSION = 5;
+// Données trop anciennes ou abîmées : on repart de la démo.
+if (state.v !== DATA_VERSION) state = seed();
 
 const listeners = new Set();
 let saveTimer;
@@ -176,14 +181,14 @@ export function share(id) { const b = bading(id); if (b) { b.shares += 1; commit
 /** `image` = { src (JPEG recadré, data URL), ratio } ou null. En prod : upload puis URL du CDN. */
 export function publish(text, anonymous, image = null) {
   const err = validate(text, !!image); if (err) return { ok: false, error: err };
-  const id = `m${Date.now()}`;
+  const id = uid('m');
   state.badings.unshift({ id, authorId: ME, anonymous, text: text.trim(), ...(image ? { image: { src: image.src, ratio: image.ratio } } : {}), createdAt: Date.now(), likes: 0, likedByMe: false, rebades: 0, shares: 0, views: 0 });
   state.postedToday += 1; state.draft = { text: '', anonymous: false, image: null }; commit();
   return { ok: true, id };
 }
 export function rebade(id, opinion, anonymous) {
   const t = bading(id); const origin = t?.rebadeOf ?? id;
-  state.badings.unshift({ id: `r${Date.now()}`, authorId: ME, anonymous, rebadeOf: origin, text: opinion.trim().slice(0, RULES.opinionMax), createdAt: Date.now(), likes: 0, likedByMe: false, rebades: 0, shares: 0, views: 0 });
+  state.badings.unshift({ id: uid('r'), authorId: ME, anonymous, rebadeOf: origin, text: opinion.trim().slice(0, RULES.opinionMax), createdAt: Date.now(), likes: 0, likedByMe: false, rebades: 0, shares: 0, views: 0 });
   const o = bading(origin); if (o) o.rebades += 1; commit();
 }
 export function remove(id) { const b = bading(id); if (b) { b.deleted = true; commit(); } }
@@ -221,14 +226,14 @@ export function addComment(badingId, text, parent, stickerId = null) {
   const t = stickerId ? '' : text.trim(); if (!stickerId && (!t || t.length > RULES.commentMax)) return null;
   if (!stickerId && BANNED.some((w) => t.toLowerCase().includes(w))) return null;
   if (stickerId) state.recentStickers = [stickerId, ...(state.recentStickers || []).filter((x) => x !== stickerId)].slice(0, 12);
-  const c = { id: `c${Date.now()}`, badingId, authorId: ME, text: t, ...(stickerId ? { sticker: stickerId } : {}), createdAt: Date.now(), parentId: parent ? parent.parentId ?? parent.id : null, replyTo: parent ? state.users[parent.authorId]?.pseudo : undefined, likes: 0, likedByMe: false };
+  const c = { id: uid('c'), badingId, authorId: ME, text: t, ...(stickerId ? { sticker: stickerId } : {}), createdAt: Date.now(), parentId: parent ? parent.parentId ?? parent.id : null, replyTo: parent ? state.users[parent.authorId]?.pseudo : undefined, likes: 0, likedByMe: false };
   state.comments.push(c); commit(); return c;
 }
 // ─── Stickers personnels (F8, comme sur TikTok) ───
 /** Crée un sticker à partir d'une image carrée (512 px) et l'ajoute à ma collection. */
 export function createSticker(src) {
   if ((state.myStickers || []).length >= RULES.myStickersMax) return null;
-  const id = `my${Date.now()}`;
+  const id = uid('my');
   state.customStickers[id] = { id, ownerId: ME, src, createdAt: Date.now() };
   state.myStickers = [id, ...(state.myStickers || [])]; commit(); return id;
 }
@@ -243,7 +248,7 @@ export const customSticker = (id) => state.customStickers?.[id];
 export function removeComment(id) { state.comments.forEach((c) => { if (c.id === id || c.parentId === id) c.deleted = true; }); commit(); }
 export function toggleCommentLike(id) { const c = state.comments.find((x) => x.id === id); if (c) { c.likes += c.likedByMe ? -1 : 1; c.likedByMe = !c.likedByMe; commit(); } }
 export function setNotifEnabled(v) { state.notifEnabled = v; commit(); }
-export function pushNotification(n) { state.notifications.unshift({ ...n, id: `n${Date.now()}`, createdAt: Date.now(), read: false }); commit(); }
+export function pushNotification(n) { state.notifications.unshift({ ...n, id: uid('n'), createdAt: Date.now(), read: false }); commit(); }
 
 /** Faux serveur : nouveaux badings au pull-to-refresh. */
 export function refreshFeed() {
@@ -259,7 +264,7 @@ export function timeAgo(ts) {
   if (s < 60) return `${s} s`; const m = Math.floor(s / 60); if (m < 60) return `${m} min`;
   const hh = Math.floor(m / 60); if (hh < 24) return `${hh} h`; return `${Math.floor(hh / 24)} j`;
 }
-export function compact(n) { if (n < 1000) return String(n); if (n < 10_000) return `${(n / 1000).toFixed(1).replace('.0', '')} k`; return `${Math.round(n / 1000)} k`; }
+export function compact(n) { if (n < 1000) return String(n); if (n < 10_000) return `${(n / 1000).toFixed(1).replace('.0', '').replace('.', ',')} k`; return `${Math.round(n / 1000)} k`; }
 export const fmtDate = (ts) => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
 /**

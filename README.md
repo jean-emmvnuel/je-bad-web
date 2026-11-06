@@ -91,3 +91,20 @@ Les liens partagés ont la forme `…/?b=<id>` (l'ancienne forme `…/#/b/<id>` 
 **On Bade** · une app **ORIVERSE** · Créée par **Jean Emmanuel Ahossi** — [portfolio](https://jeanemmanuel-portfolio-gamma.vercel.app/)
 
 </div>
+
+## Tests
+
+Tests unitaires avec [Vitest](https://vitest.dev) (navigateur simulé par jsdom). Le site n’a toujours pas de build : `package.json` ne sert qu’aux tests.
+
+```bash
+npm install
+npm test            # une fois
+npm run test:watch  # en continu
+```
+
+| Fichier | Ce qui est vérifié |
+| --- | --- |
+| `tests/store.test.js` | Règles de publication (10–1 000 caractères, légende 280, mots interdits, 5 mentions, 20 par jour), anonymat, rires, vues, partages, favoris, rebades, commentaires et stickers (collection de 50), compte (mot de passe haché, photo, pseudo, blocage, suppression), conditions du badge, copie des données, formats |
+| `tests/migrations.test.js` | Les données gardées dans le navigateur survivent à un rechargement et aux changements de version |
+| `tests/pdf.test.js` | Générateur PDF (encodage des accents, structure du fichier, coupure des lignes) et PDF « copie de mes données » |
+| `tests/helpers.test.js` | Choix d’image (formats, 10 Mo), stickers, échappement du HTML, avatars |
