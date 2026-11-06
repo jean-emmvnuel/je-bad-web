@@ -145,6 +145,7 @@ function shell() {
     </div>
     <nav class="tabbar" aria-label="Onglets">
       <a data-nav="feed" href="#/">${icon('house')}<span>Fil</span></a>
+      <a data-nav="notifications" href="#/notifications"><span class="tb-ic">${icon('bell')}<b class="dot" hidden></b></span><span>Notifs</span></a>
       <div class="bader"><a href="#/compose">${icon('plus')}Bader</a></div>
       <a data-nav="profile" href="#/profile">${icon('user')}<span>Profil</span></a>
     </nav>
@@ -168,7 +169,7 @@ function syncInstall() {
 function wireShell() {
   const refresh = () => {
     const n = S.unread();
-    document.querySelectorAll('.webnav .dot, .side-links .dot').forEach((d) => { d.hidden = !n; d.textContent = n; });
+    document.querySelectorAll('.webnav .dot, .side-links .dot, .tabbar .dot').forEach((d) => { d.hidden = !n; d.textContent = n; });
     const trends = $('[data-trends]');
     if (trends) {
       trends.innerHTML = S.feed().filter((b) => !b.rebadeOf).sort((a, b) => b.likes - a.likes).slice(0, 3).map((b) => {

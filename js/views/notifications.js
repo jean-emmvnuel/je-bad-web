@@ -15,7 +15,7 @@ export function notificationsView(root, { go, back }) {
   };
   const draw = () => {
     const list = S.get().notifications;
-    root.innerHTML = `<header class="topbar"><button class="icon-btn" data-back aria-label="Retour">${icon('arrowLeft')}</button><h1 class="t-heading">Notifications</h1></header>
+    root.innerHTML = `<header class="topbar"><h1 class="t-heading" style="padding-left:4px">Notifications</h1></header>
     ${list.length ? list.map((n) => {
       const [ic, text] = describe(n); const b = n.badingId ? S.bading(n.badingId) : null;
       return `<button class="card-row" data-go="${n.badingId ? `/bading/${n.badingId}${n.kind === 'reply' || n.kind === 'comment' ? '?focus=comment' : ''}` : '/settings'}" style="width:100%;text-align:left;padding:16px;${n.read ? '' : 'background:rgba(152,16,230,.07)'}">
@@ -24,7 +24,7 @@ export function notificationsView(root, { go, back }) {
         ${n.read ? '' : '<span style="width:8px;height:8px;border-radius:50%;background:var(--brand);margin-top:8px;flex:none" aria-label="Non lue"></span>'}
       </button>`;
     }).join('') : '<p class="muted" style="padding:24px">Rien de neuf. Quand quelqu\'un rit à tes badings, tu le verras ici.</p>'}`;
-    root.querySelector('[data-back]').onclick = () => back('/');
+    root.querySelector('[data-back]')?.addEventListener('click', () => back('/'));
     root.querySelectorAll('[data-go]').forEach((el) => (el.onclick = () => go(el.dataset.go)));
   };
   draw();

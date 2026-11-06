@@ -13,7 +13,6 @@ export function feedView(root, { go }) {
       <div class="logo only-mobile">${logo(28)}<span>On Bade</span></div>
       <h1 class="t-heading" style="flex:1" data-desk-title>Fil d'actualité</h1>
       <button class="icon-btn only-mobile" data-install-m aria-label="Installer l'app" hidden>${icon('download')}</button>
-      <a class="icon-btn only-mobile" href="#/notifications" aria-label="Notifications">${icon('bell')}<span class="badge" data-badge hidden></span></a>
     </header>
     <a class="prompt-card desk-only" href="#/compose">${avatar(S.me(), 44)}<span class="ph">Qu'est-ce qui t'est arrivé aujourd'hui ?</span><span class="btn btn-primary btn-sm">${icon('plus')} Bader</span></a>
     <div class="ptr" data-ptr aria-live="polite"><div style="position:relative">${laughingMark(44)}<span class="confetti-host" data-ptr-confetti style="position:absolute;left:50%;top:50%"></span></div><span data-ptr-label>${LABELS.pull}</span></div>
