@@ -119,7 +119,8 @@ describe('Commentaires et stickers (F8)', () => {
     expect(S.get().comments.filter((c) => c.id === 'c1' || c.parentId === 'c1').every((c) => c.deleted)).toBe(true);
   });
   it('créer un sticker l’ajoute en tête de ma collection', () => {
-    const id = S.createSticker('data:image/jpeg;base64,yy');
+    const { ok, id } = S.createSticker('data:image/jpeg;base64,yy');
+    expect(ok).toBe(true);
     expect(S.get().myStickers[0]).toBe(id);
     expect(S.customSticker(id)).toMatchObject({ ownerId: S.ME });
   });
@@ -128,10 +129,20 @@ describe('Commentaires et stickers (F8)', () => {
     expect(S.saveSticker('us1')).toBe('already');
     S.unsaveSticker('us1'); expect(S.get().myStickers).not.toContain('us1');
   });
-  it('la collection est limitée à 50 stickers', () => {
-    S.get().myStickers = Array.from({ length: 50 }, (_, i) => `x${i}`);
-    expect(S.saveSticker('us2')).toBe('full');
-    expect(S.createSticker('data:image/png;base64,zz')).toBeNull();
+  it('une très grande collection : jusqu’à 1 000 stickers', () => {
+    expect(S.RULES.myStickersMax).toBe(1000);
+    S.get().myStickers = Array.from({ length: 999 }, (_, i) => `x${i}`);
+    expect(S.saveSticker('us2')).toBe('ok');
+    expect(S.get().myStickers).toHaveLength(1000);
+    expect(S.saveSticker('us3')).toBe('full');
+    expect(S.createSticker('data:image/png;base64,zz')).toEqual({ ok: false, error: 'full' });
+  });
+  it('si le navigateur n’a plus de place, la création est annulée sans rien perdre', () => {
+    const before = [...S.get().myStickers];
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('plein', 'QuotaExceededError'); });
+    expect(S.createSticker('data:image/png;base64,zz')).toEqual({ ok: false, error: 'storage' });
+    spy.mockRestore();
+    expect(S.get().myStickers).toEqual(before);
   });
 });
 

@@ -4,7 +4,7 @@
 const min = 60_000, h = 60 * min, d = 24 * h;
 export const ME = 'me';
 
-export const RULES = { minLength: 10, maxLength: 1000, captionMax: 280, myStickersMax: 50, opinionMax: 280, commentMax: 500, dailyLimit: 20, maxMentions: 5, badge: { activeDays: 30, minLaughs: 1000 }, badgeRetryDays: 30, deletionDays: 30 };
+export const RULES = { minLength: 10, maxLength: 1000, captionMax: 280, myStickersMax: 1000, opinionMax: 280, commentMax: 500, dailyLimit: 20, maxMentions: 5, badge: { activeDays: 30, minLaughs: 1000 }, badgeRetryDays: 30, deletionDays: 30 };
 /** Identifiant unique, même pour deux actions dans la même milliseconde. */
 let seq = 0;
 export const uid = (prefix) => `${prefix}${Date.now().toString(36)}${(seq++).toString(36)}`;
@@ -230,12 +230,22 @@ export function addComment(badingId, text, parent, stickerId = null) {
   state.comments.push(c); commit(); return c;
 }
 // ─── Stickers personnels (F8, comme sur TikTok) ───
-/** Crée un sticker à partir d'une image carrée (512 px) et l'ajoute à ma collection. */
+/**
+ * Crée un sticker à partir d'une image carrée (512 px) et l'ajoute à ma collection.
+ * Renvoie { ok: true, id } ou { ok: false, error: 'full' | 'storage' }.
+ * Démo : les images sont gardées dans le navigateur, dont la place est limitée (environ 5 Mo) ;
+ * si elle manque, on annule au lieu de perdre des données. En prod, les images vont sur le CDN.
+ */
 export function createSticker(src) {
-  if ((state.myStickers || []).length >= RULES.myStickersMax) return null;
+  if ((state.myStickers || []).length >= RULES.myStickersMax) return { ok: false, error: 'full' };
   const id = uid('my');
   state.customStickers[id] = { id, ownerId: ME, src, createdAt: Date.now() };
-  state.myStickers = [id, ...(state.myStickers || [])]; commit(); return id;
+  state.myStickers = [id, ...(state.myStickers || [])];
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {
+    delete state.customStickers[id]; state.myStickers = state.myStickers.filter((x) => x !== id);
+    return { ok: false, error: 'storage' };
+  }
+  commit(); return { ok: true, id };
 }
 /** Enregistre le sticker d'un autre Badeur (touché dans un commentaire). */
 export function saveSticker(id) {

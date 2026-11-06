@@ -520,3 +520,6 @@ button.c-sticker:hover .stk { transform: rotate(var(--rot, 0deg)) scale(1.04); }
 body[data-nav="profile"] .left .me-card { display: none; }
 .side-links a[aria-current="page"] { background: var(--surface-2); }
 .prompt-card > svg { width: 22px; height: 22px; color: var(--text-3); flex: none; margin-right: 4px; }
+
+/* Grande collection de stickers : le navigateur ne dessine que les cases visibles. */
+.sp-cell { content-visibility: auto; contain-intrinsic-size: 104px 104px; }

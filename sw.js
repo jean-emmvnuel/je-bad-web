@@ -1,6 +1,6 @@
 // Service worker On Bade : app hors ligne, chargement instantané, clic sur les notifications.
 // Change VERSION à chaque mise en ligne pour que les visiteurs reçoivent la nouvelle version.
-const VERSION = 'jebade-web-v15';
+const VERSION = 'jebade-web-v16';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css',
   'js/app.js', 'js/pwa.js', 'js/store.js', 'js/components.js', 'js/ui.js', 'js/icons-data.js', 'js/notify.js', 'js/cropper.js', 'js/pdf.js', 'js/export.js', 'js/stickers.js',

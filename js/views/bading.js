@@ -146,6 +146,7 @@ export function badingView(root, { params, query, go, back }) {
     const st = S.get();
     const ids = (stTab === 'recent' ? st.recentStickers || [] : stTab === 'mine' ? st.myStickers || [] : STICKERS.filter((x) => x.theme === stTab).map((x) => x.id)).filter((sid) => !S.customSticker(sid)?.removed);
     root.querySelectorAll('[data-st-tab]').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.stTab === stTab)));
+    const mineTab = root.querySelector('[data-st-tab="mine"]'); if (mineTab) mineTab.textContent = (st.myStickers || []).length ? `Mes stickers · ${S.compact(st.myStickers.length)}` : 'Mes stickers';
     const create = stTab === 'mine' ? `<label class="sp-create" title="Créer un sticker à partir d'une photo">${icon('plus')}<span>Créer</span><input type="file" accept="${ACCEPT}" data-st-file hidden/></label>` : '';
     const items = ids.map((sid) => `<div class="sp-cell"><button class="sp-item" data-st="${sid}" aria-label="Envoyer ce sticker">${stickerHtml(sid, 92)}</button>${stTab === 'mine' ? `<button class="sp-remove" data-st-rm="${sid}" aria-label="Retirer de mes stickers">${icon('x')}</button>` : ''}</div>`).join('');
     const empty = stTab === 'mine' ? (ids.length ? '' : '<p class="t-small muted sp-empty">Crée un sticker avec une photo, ou touche le sticker d’un Badeur dans les commentaires pour l’ajouter ici.</p>') : ids.length ? '' : '<p class="t-small muted sp-empty">Tes stickers récents apparaîtront ici.</p>';
@@ -155,7 +156,8 @@ export function badingView(root, { params, query, go, back }) {
       try {
         const src = await readImageFile(file);
         const r = await openCropper(src, {}, { ratios: ['1:1'], outMax: 512, title: 'Créer un sticker' }); if (!r) return;
-        if (!S.createSticker(r.dataUrl)) return toast(`${S.RULES.myStickersMax} stickers maximum : retire-en un d’abord.`);
+        const made = S.createSticker(r.dataUrl);
+        if (!made.ok) return toast(made.error === 'full' ? `${S.compact(S.RULES.myStickersMax)} stickers maximum : retire-en un d’abord.` : 'Plus de place dans ce navigateur pour un nouveau sticker : retire-en quelques-uns.');
         stTab = 'mine'; drawStickers(); toast('Sticker créé et ajouté à tes stickers');
       } catch (x) { if (x.message !== 'none') toast(x.message); }
     });
@@ -170,7 +172,7 @@ export function badingView(root, { params, query, go, back }) {
     const p = sheet({ html: `<div class="pad" style="display:flex;flex-direction:column;align-items:center;gap:16px">${stickerHtml(sid, 150)}<span class="t-small" style="color:var(--text-3)">${who}</span>${action}</div>` });
     p.querySelector('[data-save-st]')?.addEventListener('click', () => {
       const r = S.saveSticker(sid); closeSheet();
-      toast(r === 'full' ? `${S.RULES.myStickersMax} stickers maximum : retire-en un d’abord.` : 'Ajouté à tes stickers');
+      toast(r === 'full' ? `${S.compact(S.RULES.myStickersMax)} stickers maximum : retire-en un d’abord.` : 'Ajouté à tes stickers');
     });
   };
   const togglePicker = (show = picker.hidden) => {
