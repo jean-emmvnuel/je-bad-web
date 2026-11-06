@@ -4,7 +4,7 @@
 const min = 60_000, h = 60 * min, d = 24 * h;
 export const ME = 'me';
 
-export const RULES = { minLength: 10, maxLength: 1000, captionMax: 280, myStickersMax: 50, opinionMax: 280, commentMax: 500, dailyLimit: 20, maxMentions: 5, badge: { minAgeDays: 30, minBadings: 10 }, badgeRetryDays: 30, deletionDays: 30 };
+export const RULES = { minLength: 10, maxLength: 1000, captionMax: 280, myStickersMax: 50, opinionMax: 280, commentMax: 500, dailyLimit: 20, maxMentions: 5, badge: { activeDays: 30, minLaughs: 1000 }, badgeRetryDays: 30, deletionDays: 30 };
 const BANNED = ['connard', 'pute', 'nègre', 'tuer'];
 
 function seed() {
@@ -65,7 +65,7 @@ function seed() {
   return {
     v: 4, onboarded: false, session: null, users, badings, comments, notifications, incoming,
     draft: { text: '', anonymous: false, image: null }, recentStickers: [], customStickers, myStickers: [], mentionPolicy: 'everyone', favorites: [], blocked: [], postedToday: 0,
-    badge: { status: 'refused', reason: 'il faut au moins 10 badings publiés', decidedAt: now - 3 * d },
+    badge: { status: 'refused', reason: 'il faut au moins 1 000 rires reçus sur tes badings signés', decidedAt: now - 3 * d },
     deletion: { status: 'none' }, pendingLink: null, notifEnabled: false, accounts: {}, pendingSignup: null,
   };
 }
@@ -194,6 +194,20 @@ export function unblock(uid) { state.blocked = state.blocked.filter((x) => x !==
 export function changePseudo(p) { state.users[ME].pseudo = p; state.users[ME].verified = false; syncMe(); commit(); }
 /** Photo de profil : JPEG carré 400 px (data URL) ou null pour la retirer. En prod : upload puis URL du CDN. */
 export function setPhoto(src) { if (src) state.users[ME].photo = src; else delete state.users[ME].photo; syncMe(); commit(); }
+/**
+ * Certification (F6) : on peut demander le badge seulement si l'on est actif (un bading signé
+ * publié dans les 30 derniers jours) et qu'on a reçu au moins 1 000 rires sur ses badings signés.
+ * Les badings anonymes ne comptent pas (ils ne doivent jamais être reliés au compte).
+ * La décision appartient uniquement à l'équipe On Bade (dashboard admin), qui peut aussi attribuer le badge directement.
+ */
+export function badgeEligibility() {
+  const signed = state.badings.filter((b) => b.authorId === ME && !b.deleted && !b.anonymous);
+  const last = signed.filter((b) => !b.rebadeOf).reduce((m, b) => Math.max(m, b.createdAt), 0);
+  const lastDays = last ? Math.floor((Date.now() - last) / d) : null;
+  const active = lastDays !== null && lastDays <= RULES.badge.activeDays;
+  const laughs = signed.reduce((n, b) => n + (b.likes || 0), 0);
+  return { active, lastDays, laughs, enoughLaughs: laughs >= RULES.badge.minLaughs, eligible: active && laughs >= RULES.badge.minLaughs };
+}
 export function requestBadge(links) { state.badge = { status: 'pending', links }; commit(); }
 export function requestDeletion(reason) { state.deletion = { status: 'pending', requestedAt: Date.now(), reason }; commit(); }
 export function cancelDeletion() { state.deletion = { status: 'none' }; commit(); }

@@ -75,12 +75,14 @@ export function settingsView(root, { go, back }) {
       return;
     }
     if (a === 'badge') {
-      const ageDays = Math.floor((Date.now() - (me.joinedAt ?? Date.now())) / DAY);
-      const published = S.feed().filter((b) => b.authorId === S.ME && !b.rebadeOf).length;
-      const checks = [[ageDays >= S.RULES.badge.minAgeDays, `Compte de plus de ${S.RULES.badge.minAgeDays} jours`, `${ageDays} j`], [published >= S.RULES.badge.minBadings, `Au moins ${S.RULES.badge.minBadings} badings publiés`, `${published} / ${S.RULES.badge.minBadings}`], [true, 'Aucun avertissement de modération', 'OK']];
-      const waiting = retryAt > Date.now(), eligible = checks.every((c) => c[0]) && !waiting;
+      const el = S.badgeEligibility();
+      const checks = [
+        [el.active, `Être actif : un bading signé ces ${S.RULES.badge.activeDays} derniers jours`, el.lastDays === null ? 'aucun' : el.lastDays === 0 ? "aujourd'hui" : `il y a ${el.lastDays} j`],
+        [el.enoughLaughs, `Au moins ${S.compact(S.RULES.badge.minLaughs)} rires reçus`, `${S.compact(el.laughs)} / ${S.compact(S.RULES.badge.minLaughs)}`],
+      ];
+      const waiting = retryAt > Date.now(), eligible = el.eligible && !waiting;
       const body = st.badge.status === 'pending' ? `<p class="muted">Ta demande est en cours d'examen. Réponse sous 7 jours, par notification.</p><b style="color:var(--brand-ink)">Statut : en attente</b>` : `
-        <p class="muted">Il confirme que ton compte est authentique (humoristes, pages, marques). Gratuit.</p>
+        <p class="muted">Il confirme que ton compte est authentique et que tu fais rire. Gratuit. Quand les deux conditions sont remplies, tu peux faire ta demande ; seule l'équipe On Bade décide et attribue le badge.</p><p class="t-small" style="color:var(--text-3)">Seuls tes badings signés comptent, jamais les anonymes.</p>
         ${st.badge.status === 'refused' ? `<p class="t-meta" style="color:var(--text-2)">Dernière demande refusée${st.badge.reason ? ` : ${esc(st.badge.reason)}` : ''}.${waiting ? ` Nouvelle demande possible le ${S.fmtDate(retryAt)}.` : ''}</p>` : ''}
         <div style="display:flex;flex-direction:column;gap:12px">${checks.map(([ok, l, v]) => `<div style="display:flex;align-items:center;gap:12px"><span style="color:${ok ? 'var(--success)' : 'var(--danger)'}">${icon(ok ? 'check' : 'circleX')}</span><span style="flex:1">${l}</span><span class="t-meta">${v}</span></div>`).join('')}</div>
         <div data-form hidden style="display:flex;flex-direction:column;gap:12px">

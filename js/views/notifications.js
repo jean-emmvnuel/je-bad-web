@@ -10,7 +10,7 @@ export function notificationsView(root, { go, back }) {
       case 'mention': return ['atSign', `${actor ?? 'Un Badeur anonyme'} t'a mentionné`];
       case 'comment': return ['message', `${actor} a commenté ton bading`];
       case 'reply': return ['message', `${actor} a répondu à ton commentaire`];
-      default: return ['badgeCheck', n.badgeStatus === 'accepted' ? 'Ta demande de badge vérifié est acceptée' : 'Ta demande de badge vérifié est refusée : il faut au moins 10 badings publiés.'];
+      default: return ['badgeCheck', n.badgeStatus === 'granted' ? 'L’équipe On Bade t’a attribué le badge vérifié' : n.badgeStatus === 'accepted' ? 'Ta demande de badge vérifié est acceptée' : `Ta demande de badge vérifié est refusée${S.get().badge.reason ? ` : ${S.get().badge.reason}` : ''}.`];
     }
   };
   const draw = () => {
@@ -19,7 +19,7 @@ export function notificationsView(root, { go, back }) {
     ${list.length ? list.map((n) => {
       const [ic, text] = describe(n); const b = n.badingId ? S.bading(n.badingId) : null;
       return `<button class="card-row" data-go="${n.badingId ? `/bading/${n.badingId}${n.kind === 'reply' || n.kind === 'comment' ? '?focus=comment' : ''}` : '/settings'}" style="width:100%;text-align:left;padding:16px;${n.read ? '' : 'background:rgba(152,16,230,.07)'}">
-        <span style="width:44px;display:flex;justify-content:flex-end;color:${n.kind === 'badge' && n.badgeStatus !== 'accepted' ? 'var(--text-2)' : 'var(--brand-ink)'}">${icon(ic)}</span>
+        <span style="width:44px;display:flex;justify-content:flex-end;color:${n.kind === 'badge' && n.badgeStatus === 'refused' ? 'var(--text-2)' : 'var(--brand-ink)'}">${icon(ic)}</span>
         <span class="body" style="gap:6px">${n.kind !== 'badge' ? avatar(n.actorId ? S.user(n.actorId) ?? null : null, 32) : ''}<span>${esc(text)} <span class="t-meta">· ${S.timeAgo(n.createdAt)}</span></span>${b ? `<span class="t-meta" style="color:var(--text-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(b.text)}</span>` : ''}</span>
         ${n.read ? '' : '<span style="width:8px;height:8px;border-radius:50%;background:var(--brand);margin-top:8px;flex:none" aria-label="Non lue"></span>'}
       </button>`;
