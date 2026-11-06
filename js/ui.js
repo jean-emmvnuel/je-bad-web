@@ -1,5 +1,6 @@
 import { ICONS } from './icons-data.js';
 
+import { project, rubberband, spring, velocityTracker } from './motion.js';
 export const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -43,32 +44,83 @@ export function toast(msg) {
 }
 
 // ─── Sheet (feuille du bas / modale sur desktop) ───────────
+// Mobile : la feuille suit le doigt 1:1, résiste vers le haut, et se ferme selon l'élan du geste
+// (projection), avec un ressort qui reprend la vitesse du doigt. Ordinateur : fenêtre centrée.
 let openSheet = null;
+const sheetY = (panel, y) => { panel.style.transform = `translateX(-50%) translateY(${y}px)`; };
 export function sheet({ title = '', html, onMount }) {
   closeSheet(true);
   const root = $('#sheet-root');
-  const desktop = matchMedia('(min-width: 900px)').matches;
-  root.innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" ${title ? `aria-label="${esc(title)}"` : ''}><div class="grab"></div>${title ? `<h2 class="t-heading">${esc(title)}</h2>` : ''}${html}</div>`;
+  const desktop = matchMedia('(min-width: 900px)').matches, still = reduceMotion();
+  root.innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" ${title ? `aria-label="${esc(title)}"` : ''}><div class="grab" aria-hidden="true"></div>${title ? `<h2 class="t-heading">${esc(title)}</h2>` : ''}${html}</div>`;
   const panel = $('.sheet', root), scrim = $('.scrim', root);
-  gsap.fromTo(scrim, { opacity: 0 }, { opacity: 1, duration: 0.25 });
-  gsap.fromTo(panel, desktop ? { opacity: 0, scale: 0.94 } : { yPercent: 100 }, desktop ? { opacity: 1, scale: 1, duration: 0.35, ease: 'expo.out' } : { yPercent: 0, duration: 0.42, ease: 'expo.out' });
-  const onKey = (e) => e.key === 'Escape' && closeSheet();
-  document.addEventListener('keydown', onKey);
+  const state = { panel, scrim, desktop, anim: null, onKey: (e) => e.key === 'Escape' && closeSheet() };
+  if (desktop || still) {
+    gsap.fromTo(scrim, { opacity: 0 }, { opacity: 1, duration: 0.25 });
+    if (desktop) gsap.fromTo(panel, { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.3, ease: 'expo.out' });
+    else gsap.fromTo(panel, { opacity: 0 }, { opacity: 1, duration: 0.2 });
+  } else {
+    const h = panel.offsetHeight;
+    sheetY(panel, h); scrim.style.opacity = 0;
+    state.anim = spring(h, 0, { damping: 1, response: 0.35, onUpdate: (y) => { sheetY(panel, y); scrim.style.opacity = String(1 - y / h); } });
+    dragToDismiss(state);
+  }
+  document.addEventListener('keydown', state.onKey);
   root.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeSheet(); });
-  openSheet = { panel, scrim, onKey, desktop };
+  openSheet = state;
   onMount?.(panel);
-  setTimeout(() => panel.querySelector('button, input, textarea')?.focus(), 50);
+  setTimeout(() => panel.querySelector('button, input, textarea')?.focus({ preventScroll: true }), 50);
   return panel;
 }
-export function closeSheet(instant = false) {
+function dragToDismiss(state) {
+  const { panel, scrim } = state;
+  let start = null, dragging = false, base = 0, vt = null, suppressClick = false;
+  panel.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || e.target.closest('input, textarea, [contenteditable]')) return;
+    state.anim?.stop(); // on rattrape la feuille en plein vol, depuis sa position à l'écran
+    base = state.anim ? state.anim.value() : 0;
+    start = { y: e.clientY, id: e.pointerId }; dragging = false; vt = velocityTracker(); vt.add(base);
+  });
+  panel.addEventListener('pointermove', (e) => {
+    if (!start || e.pointerId !== start.id) return;
+    const dy = e.clientY - start.y;
+    if (!dragging) {
+      // Petit seuil avant de décider (10 px), et seulement si le contenu est tout en haut.
+      if (Math.abs(dy) < 10 || (dy > 0 && panel.scrollTop > 0) || dy < 0) { if (Math.abs(dy) >= 10) start = null; return; }
+      dragging = true; suppressClick = true; panel.setPointerCapture(e.pointerId); panel.classList.add('dragging');
+    }
+    const raw = base + dy - 10, y = raw < 0 ? rubberband(raw, panel.offsetHeight) : raw;
+    sheetY(panel, y); scrim.style.opacity = String(Math.max(0, 1 - y / panel.offsetHeight)); vt.add(y);
+    state.current = y;
+  });
+  const end = (e) => {
+    if (!start || e.pointerId !== start.id) return;
+    start = null; if (!dragging) return;
+    dragging = false; panel.classList.remove('dragging');
+    const h = panel.offsetHeight, y = state.current ?? 0, v = vt.get();
+    // On décide avec l'endroit où le geste « va » (élan), pas seulement là où on a lâché.
+    if (y + project(v) > h * 0.45 || v > 900) { state.anim = { stop() {}, value: () => y }; closeSheet(false, v); }
+    else state.anim = spring(y, 0, { velocity: v, damping: 0.85, response: 0.3, onUpdate: (p) => { sheetY(panel, p); scrim.style.opacity = String(1 - Math.max(0, p) / h); } });
+  };
+  panel.addEventListener('pointerup', end); panel.addEventListener('pointercancel', end);
+  panel.addEventListener('click', (e) => { if (suppressClick) { e.stopPropagation(); e.preventDefault(); suppressClick = false; } }, true);
+}
+export function closeSheet(instant = false, velocity = 0) {
   if (!openSheet) return;
-  const { panel, scrim, onKey, desktop } = openSheet; openSheet = null;
+  const { panel, scrim, onKey, desktop, anim } = openSheet; openSheet = null;
   document.removeEventListener('keydown', onKey);
   const root = $('#sheet-root');
+  anim?.stop();
   if (instant) { root.innerHTML = ''; return; }
-  gsap.to(scrim, { opacity: 0, duration: 0.2 });
-  gsap.to(panel, desktop ? { opacity: 0, scale: 0.96, duration: 0.18 } : { yPercent: 100, duration: 0.22, ease: 'power2.in' , onComplete: () => (root.innerHTML = '') });
-  if (desktop) setTimeout(() => (root.innerHTML = ''), 200);
+  const done = () => { if (root.contains(panel)) root.innerHTML = ''; };
+  if (desktop || reduceMotion()) {
+    gsap.to(scrim, { opacity: 0, duration: 0.18 });
+    gsap.to(panel, desktop ? { opacity: 0, scale: 0.97, duration: 0.16, onComplete: done } : { opacity: 0, duration: 0.16, onComplete: done });
+    return;
+  }
+  // Même chemin qu'à l'ouverture (vers le bas), en gardant la vitesse du doigt.
+  const h = panel.offsetHeight, from = anim ? anim.value() : 0;
+  spring(from, h + 24, { velocity: Math.max(velocity, 0), damping: 1, response: 0.28, onUpdate: (y) => { sheetY(panel, y); scrim.style.opacity = String(Math.max(0, 1 - y / h)); }, onDone: done });
 }
 export const sheetItem = (action, label, { iconName, danger, detail } = {}) =>
   `<button class="item ${danger ? 'danger' : ''}" data-act="${action}">${iconName ? icon(iconName) : ''}<span>${esc(label)}${detail ? `<small>${esc(detail)}</small>` : ''}</span></button>`;

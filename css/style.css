@@ -523,3 +523,51 @@ body[data-nav="profile"] .left .me-card { display: none; }
 
 /* Grande collection de stickers : le navigateur ne dessine que les cases visibles. */
 .sp-cell { content-visibility: auto; contain-intrinsic-size: 104px 104px; }
+
+/* ═════════════ Apple Design (skill apple-design) ═════════════
+   Réponse immédiate au toucher, matières translucides, typographie qui change avec la taille,
+   et respect des réglages d'accessibilité (mouvement, transparence, contraste). */
+
+/* 1. Réponse : retour dès l'appui (pas au relâchement), sans délai de 300 ms ni flash gris. */
+html { -webkit-tap-highlight-color: transparent; }
+a, button, [role="button"], [data-go], label { touch-action: manipulation; }
+.icon-btn, .act, .chip, .chip-btn, .tabbar a, .sp-item, .sheet .item, .srow, .pf-tabs button, .sp-tabs button { transition: transform 100ms ease-out, background-color 150ms, color 150ms; }
+.icon-btn:active, .act:active, .chip:active, .chip-btn:active, .sp-item:active, .pf-tabs button:active, .sp-tabs button:active { transform: scale(0.94); }
+.tabbar a:active { transform: scale(0.92); }
+.sheet .item:active, .srow:active { background: var(--surface-2); }
+.card-row.bub { transition: transform 120ms ease-out, border-color 150ms; }
+.card-row.bub:active:not(:has(button:active, a:active)) { transform: scale(0.99); }
+.btn:active { transform: scale(0.97); transition-duration: 100ms; }
+
+/* 2. Matières : barres translucides, le contenu défile dessous. Bord lumineux plutôt qu'un trait gris. */
+.topbar { background: rgba(26, 25, 25, 0.72); backdrop-filter: blur(20px) saturate(170%); -webkit-backdrop-filter: blur(20px) saturate(170%); border-bottom-color: transparent; transition: border-color 200ms, box-shadow 200ms; }
+body.scrolled .topbar { border-bottom-color: rgba(255, 255, 255, 0.06); box-shadow: 0 8px 24px -16px rgba(0, 0, 0, 0.8); }
+.tabbar { background: rgba(26, 25, 25, 0.72); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.sheet { box-shadow: 0 -12px 40px -12px rgba(0, 0, 0, 0.6); border-top: 1px solid rgba(255, 255, 255, 0.06); overscroll-behavior: contain; will-change: transform; }
+.sheet .grab { width: 36px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.22); margin: 2px auto 14px; }
+.sheet.dragging { cursor: grabbing; user-select: none; }
+.scrim { backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+@media (min-width: 900px) { .webbar { background: rgba(26, 25, 25, 0.72); backdrop-filter: blur(20px) saturate(170%); -webkit-backdrop-filter: blur(20px) saturate(170%); border-bottom-color: rgba(255, 255, 255, 0.06); } }
+
+/* 3. Typographie : interlettrage selon la taille (serré en grand, légèrement ouvert en petit). */
+.t-heading { letter-spacing: -0.012em; }
+.t-story { letter-spacing: -0.003em; }
+.t-meta, .t-small, .tabbar a, .hint, .muted.t-small { letter-spacing: 0.01em; }
+.tabbar a span { font-size: 11.5px; letter-spacing: 0.02em; font-weight: 600; }
+.t-hero, .t-title { font-optical-sizing: auto; }
+
+/* 4. Accessibilité */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  .card-row.bub:active, .btn:active, .icon-btn:active, .act:active { transform: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .topbar, .tabbar, .webbar, .chip-btn, .scrim { background: var(--bg) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  .scrim { background: rgba(10, 9, 9, 0.85) !important; }
+}
+@media (prefers-contrast: more) {
+  .topbar, body.scrolled .topbar { border-bottom: 1px solid var(--text-3); }
+  .tabbar { border-top-color: var(--text-3); background: var(--bg); }
+  .card-row.bub, .pf-card, .pf-tabs, .sheet { border-color: var(--text-3); }
+  .t-meta, .t-small, .muted { color: var(--text-2); }
+}

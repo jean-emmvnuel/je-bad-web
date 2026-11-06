@@ -185,6 +185,10 @@ function wireShell() {
   });
 }
 
+// Bord de défilement : la séparation sous la barre du haut n'apparaît que quand le contenu passe dessous.
+let edgeRaf = 0;
+addEventListener('scroll', () => { cancelAnimationFrame(edgeRaf); edgeRaf = requestAnimationFrame(() => document.body.classList.toggle('scrolled', scrollY > 4)); }, { passive: true });
+
 function updateNav(active) {
   document.body.dataset.nav = active ?? '';
   document.querySelectorAll('[data-nav]').forEach((a) => (a.dataset.nav === active ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));

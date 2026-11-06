@@ -2,6 +2,7 @@ import * as S from './store.js';
 import { $, avatar, closeSheet, confetti, esc, icon, logo, reduceMotion, rich, sheet, sheetItem, toast, verified } from './ui.js';
 
 import { badingUrl } from './pwa.js';
+import { haptic } from './motion.js';
 
 const PUBLIC_HOST = 'https://jebade.app';
 /**
@@ -73,7 +74,7 @@ export function wireActions(root, go) {
           el.querySelector('[data-n]').textContent = S.compact(S.bading(id).likes);
         });
         if (turningOn) {
-          confetti(btn.querySelector('.confetti-host'));
+          confetti(btn.querySelector('.confetti-host')); haptic(); // même image : confettis + vibration
           if (!reduceMotion()) gsap.fromTo(btn.querySelector('svg'), { scale: 1.4, rotation: -14 }, { scale: 1, rotation: 0, duration: 0.6, ease: 'elastic.out(1.1, 0.35)' });
         }
         break;
