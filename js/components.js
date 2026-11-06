@@ -26,7 +26,7 @@ export function quoted(id) {
 }
 export const actionsRow = (t) => `
   <div class="actions" data-id="${t.id}">
-    <button class="act laugh ${t.likedByMe ? 'on' : ''}" data-a="laugh" aria-pressed="${t.likedByMe}" aria-label="Rire, ${t.likes} rires"><span class="confetti-host"></span>${icon('laugh')}<span class="laugh-l">Rire</span><span data-n>${S.compact(t.likes)}</span></button>
+    <button class="act ${t.likedByMe ? 'on' : ''}" data-a="laugh" aria-pressed="${t.likedByMe}" aria-label="Rire, ${t.likes} rires"><span class="confetti-host"></span>${icon('laugh')}<span data-n>${S.compact(t.likes)}</span></button>
     <button class="act" data-a="comment" aria-label="Commenter">${icon('message')}<span>${S.compact(S.commentCount(t.id))}</span></button>
     <button class="act" data-a="rebade" aria-label="Rebader">${icon('repeat')}<span>${S.compact(t.rebades)}</span></button>
     <button class="act" data-a="share" aria-label="Partager">${icon('share')}</button>

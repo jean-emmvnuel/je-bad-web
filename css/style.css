@@ -466,14 +466,6 @@ button.c-sticker:hover .stk { transform: rotate(var(--rot, 0deg)) scale(1.04); }
 .card-row.bub .b-img { margin-top: 2px; }
 .card-row.bub .quote { background: rgba(26, 25, 25, 0.6); }
 .card-row.bub .actions { margin: 2px -6px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 8px; }
-/* Bouton « Rire » : pastille neutre, violette seulement quand on a ri */
-.act.laugh { background: var(--surface-2); color: var(--text); font-weight: 700; padding: 0 14px 0 10px; margin-right: 6px; }
-.act.laugh .laugh-l { font-weight: 600; }
-.act.laugh [data-n] { opacity: 0.85; }
-.act.laugh:hover { background: #353232; color: var(--text); }
-.act.laugh.on { background: var(--brand); color: #fff; }
-.act.laugh.on svg { fill: rgba(255, 255, 255, 0.2); }
-@media (max-width: 380px) { .act.laugh .laugh-l { display: none; } }
 @media (min-width: 900px) {
   .main .card-row.bub { margin: 0 0 22px; padding: 18px 22px 12px; border-radius: var(--r-xl); border: 1px solid var(--line); }
   .main .card-row.bub:hover { border-color: #46423f; }
