@@ -21,21 +21,23 @@ export function profileView(root, { go }) {
     const u = me(), p = pub();
     const joined = new Date(u.joinedAt ?? Date.now()).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
     return `
-    <header class="topbar"><h1 class="t-heading" style="flex:1">${esc(u.pseudo)}</h1><a class="icon-btn" href="#/settings" aria-label="Paramètres">${icon('settings')}</a></header>
-    <section class="profile-hero" style="padding:16px;display:flex;flex-direction:column;gap:12px">
-      <button data-avatar aria-label="Changer d'avatar" style="align-self:flex-start;position:relative;border-radius:50%">
-        <span style="display:block;border:3px solid var(--bg);border-radius:50%">${avatar(u, 88)}</span>
-        <span style="position:absolute;right:0;bottom:2px;width:30px;height:30px;border-radius:50%;background:var(--brand);border:3px solid var(--bg);display:grid;place-items:center;color:#fff">${icon('pencil').replace('class="i ', 'style="width:13px;height:13px;stroke-width:2.6" class="i ')}</span>
+    <header class="topbar"><h1 class="t-heading" style="flex:1">Profil</h1><a class="icon-btn" href="#/settings" aria-label="Paramètres">${icon('settings')}</a></header>
+    <section class="profile-hero pf-card">
+      <button class="pf-avatar" data-avatar aria-label="Changer d'avatar">
+        ${avatar(u, 96)}
+        <span class="pf-edit">${icon('pencil')}</span>
       </button>
-      <div><div style="display:flex;align-items:center;gap:8px"><span class="t-title">${esc(u.pseudo)}</span>${u.verified ? verified() : ''}</div><span class="t-meta">@${esc(u.pseudo)} · Badeur depuis ${joined}</span></div>
-      <div class="stats">
-        <div class="stat hero"><b data-cu="${p.reduce((s, b) => s + b.likes, 0)}">0</b><span>${icon('laugh')}rires</span></div>
-        <div class="stat"><b data-cu="${p.reduce((s, b) => s + b.rebades, 0)}">0</b><span>${icon('repeat')}rebades</span></div>
-        <div class="stat"><b data-cu="${p.reduce((s, b) => s + b.shares, 0)}">0</b><span>${icon('share')}partages</span></div>
-        <div class="stat"><b data-cu="${p.filter((b) => !b.rebadeOf).length}">0</b><span>${icon('penLine')}badings</span></div>
+      <div class="pf-name"><span class="t-title">${esc(u.pseudo)}</span>${u.verified ? verified() : ''}</div>
+      <span class="t-meta">@${esc(u.pseudo)} · Badeur depuis ${joined}</span>
+      <div class="pf-stats">
+        <div><b data-cu="${p.filter((b) => !b.rebadeOf).length}">0</b><span>badings</span></div>
+        <div><b data-cu="${p.reduce((s, b) => s + b.likes, 0)}">0</b><span>rires</span></div>
+        <div><b data-cu="${p.reduce((s, b) => s + b.rebades, 0)}">0</b><span>rebades</span></div>
+        <div><b data-cu="${p.reduce((s, b) => s + b.shares, 0)}">0</b><span>partages</span></div>
       </div>
+      <button class="btn btn-secondary btn-sm pf-btn" data-avatar2>${icon('pencil')} Changer mon avatar</button>
     </section>
-    <div class="tabs" role="tablist">${TABS.map((t) => `<button role="tab" data-tab="${t.k}">${t.lock ? icon('lock') : ''}${t.label}${t.k === 'fav' && S.get().favorites.length ? ` <span class="t-small" style="color:var(--text-3)">${S.get().favorites.length}</span>` : ''}</button>`).join('')}<span class="ink"></span></div>
+    <div class="pf-tabs" role="tablist">${TABS.map((t) => `<button role="tab" data-tab="${t.k}">${t.lock ? icon('lock') : ''}${t.label}${t.k === 'fav' && S.get().favorites.length ? ` <span class="pf-count">${S.get().favorites.length}</span>` : ''}</button>`).join('')}</div>
     <div data-list></div>`;
   };
 
@@ -43,20 +45,18 @@ export function profileView(root, { go }) {
     const data = tab === 'public' ? pub() : tab === 'fav' ? S.get().favorites.map(S.bading).filter((b) => b && !b.deleted) : mine().filter((b) => b.anonymous);
     const note = tab === 'fav' ? 'Tes badings mis de côté. Visible par toi seul.' : tab === 'anon' ? 'Visible par toi seul. Sur ton profil public, personne ne peut relier ces badings à toi.' : '';
     const [t, b, cta] = EMPTY[tab];
-    $('[data-list]', root).innerHTML = (note ? `<p class="t-meta" style="padding:16px;border-bottom:1px solid var(--line);color:var(--text-2)">${note}</p>` : '') +
+    $('[data-list]', root).innerHTML = (note ? `<p class="pf-note">${icon('lock')}<span>${note}</span></p>` : '') +
       (data.length ? data.map(card).join('') : `<div class="empty"><h2 class="t-heading">${t}</h2><p class="muted">${b}</p>${cta}</div>`);
     if (!reduceMotion()) gsap.from(root.querySelectorAll('[data-list] .card-row'), { y: 10, opacity: 0, duration: 0.35, stagger: 0.04, ease: 'expo.out', clearProps: 'all' });
   };
   const ink = () => {
-    const t = $(`[data-tab="${tab}"]`, root);
-    root.querySelectorAll('[data-tab]').forEach((x) => x.setAttribute('aria-selected', String(x === t)));
-    gsap.to($('.ink', root), { x: t.offsetLeft + t.offsetWidth / 2 - 28, width: 56, duration: reduceMotion() ? 0 : 0.45, ease: 'expo.out' });
+    root.querySelectorAll('[data-tab]').forEach((x) => x.setAttribute('aria-selected', String(x.dataset.tab === tab)));
   };
   const draw = () => {
     root.innerHTML = head();
     root.querySelectorAll('[data-cu]').forEach((el) => countUp(el, Number(el.dataset.cu)));
     root.querySelectorAll('[data-tab]').forEach((t) => (t.onclick = () => { tab = t.dataset.tab; ink(); list(); }));
-    $('[data-avatar]', root).onclick = openPicker;
+    $('[data-avatar]', root).onclick = openPicker; $('[data-avatar2]', root).onclick = openPicker;
     list(); requestAnimationFrame(ink);
   };
   wireActions(root, go);
