@@ -112,10 +112,7 @@ function shell() {
           <a data-nav="profile" href="#/profile">${icon('user')}<span>Profil</span></a>
         </nav>
         <div class="webbar-actions">
-          <button class="btn btn-secondary btn-sm" data-install hidden>${icon('download')}<span>Installer l'app</span></button>
           <a class="btn btn-primary btn-sm" href="#/compose">${icon('plus')} Bader</a>
-          <a class="icon-btn" data-nav="settings" href="#/settings" aria-label="Paramètres">${icon('settings')}</a>
-          <a class="me-chip" href="#/profile" data-me-chip aria-label="Mon profil">${avatar(u, 36)}</a>
         </div>
       </div>
     </header>
@@ -123,9 +120,7 @@ function shell() {
       <aside class="left" aria-label="Mon compte">
         <div class="card me-card" data-me-card></div>
         <nav class="card side-links" aria-label="Raccourcis">
-          <a href="#/profile">${icon('user')}<span>Mes badings</span></a>
-          <a href="#/notifications">${icon('bell')}<span>Notifications</span><b class="dot" hidden></b></a>
-          <a href="#/settings">${icon('settings')}<span>Paramètres</span></a>
+          <a data-nav="settings" href="#/settings">${icon('settings')}<span>Paramètres</span></a>
           <a href="#/privacy">${icon('lock')}<span>Confidentialité</span></a>
         </nav>
       </aside>
@@ -140,7 +135,7 @@ function shell() {
           <p class="muted">Une vraie app sur ton téléphone ou ton ordinateur : ouverture instantanée, notifications, et les liens partagés s'ouvrent directement dedans.</p>
           <button class="btn btn-primary btn-sm" data-install>${icon('download')} Installer</button>
         </div>
-        <footer>On Bade · une app ORIVERSE<br/>Créé par <a href="https://jeanemmanuel-portfolio-gamma.vercel.app/" target="_blank" rel="noopener">Jean Emmanuel Ahossi</a> · <a href="#/privacy">Confidentialité</a></footer>
+        <footer>On Bade · une app ORIVERSE<br/>Créé par <a href="https://jeanemmanuel-portfolio-gamma.vercel.app/" target="_blank" rel="noopener">Jean Emmanuel Ahossi</a></footer>
       </aside>
     </div>
     <nav class="tabbar" aria-label="Onglets">
@@ -191,6 +186,7 @@ function wireShell() {
 }
 
 function updateNav(active) {
+  document.body.dataset.nav = active ?? '';
   document.querySelectorAll('[data-nav]').forEach((a) => (a.dataset.nav === active ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
 }
 

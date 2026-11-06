@@ -1,4 +1,5 @@
 import * as S from '../store.js';
+import { downloadMyData } from '../export.js';
 import { avatar, closeSheet, esc, icon, logo, sheet, toast } from '../ui.js';
 import { enableNotifications, notifStatus, notify } from '../notify.js';
 
@@ -32,7 +33,7 @@ export function settingsView(root, { go, back }) {
         </div></div>
         <div class="section"><h3>Mes données</h3><div class="group">
           ${row('privacy', 'lock', 'Politique de confidentialité', 'Tes données, tes droits (loi ivoirienne n° 2013-450)')}
-          ${row('export', 'download', 'Recevoir une copie de mes données', 'Envoyée à ton adresse e-mail sous 30 jours')}
+          ${row('export', 'download', 'Recevoir une copie de mes données', 'Un PDF avec ton compte, tes badings et toutes tes statistiques')}
           ${st.deletion.status === 'pending'
             ? `<div class="srow"><span style="color:var(--danger)">${icon('trash')}</span><span class="txt"><span class="t-label">Suppression demandée</span><small>Le ${S.fmtDate(st.deletion.requestedAt + S.RULES.deletionDays * DAY)} · tu peux encore annuler</small></span><button class="btn btn-secondary btn-sm" data-s="cancel-del">Annuler</button></div>`
             : row('delete', 'trash', 'Demander la suppression de mon compte', '', { danger: true })}
@@ -54,7 +55,10 @@ export function settingsView(root, { go, back }) {
     if (a === 'm-everyone' || a === 'm-nobody') { S.setMentionPolicy(a.slice(2)); return draw(); }
     if (a === 'privacy') return go('/privacy');
     if (a === 'logout') { S.signOut(); return go('/auth/signup?mode=login', { replace: true }); }
-    if (a === 'export') return toast('Demande envoyée : tu recevras un lien sécurisé');
+    if (a === 'export') {
+      try { downloadMyData(); toast('Ta copie (PDF) est téléchargée'); } catch (e) { console.error(e); toast('Impossible de créer le PDF, réessaie.'); }
+      return;
+    }
     if (a === 'cancel-del') { S.cancelDeletion(); toast('Demande de suppression annulée'); return draw(); }
     if (a === 'notif') {
       const r = await enableNotifications(); draw();

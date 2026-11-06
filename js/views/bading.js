@@ -11,6 +11,7 @@ export function badingView(root, { params, query, go, back }) {
   const b = S.bading(id);
   const header = `<header class="topbar"><button class="icon-btn" data-back aria-label="Retour">${icon('arrowLeft')}</button><h1 class="t-heading">Bading</h1>${b && !b.deleted ? `<button class="icon-btn" data-a="more" data-id="${id}" aria-label="Plus d'options">${icon('ellipsis')}</button>` : ''}</header>`;
 
+  if (b && !b.deleted && b.authorId !== S.ME) S.addView(id);
   if (!b || b.deleted) {
     root.innerHTML = `${header}<div class="empty"><h2 class="t-title">Ce bading n'est plus disponible.</h2><p class="muted">Son auteur l'a supprimé, ou il a été retiré par la modération.</p><a class="btn btn-secondary" href="#/">Retour au fil</a></div>`;
     $('[data-back]', root).onclick = () => back('/');
@@ -46,7 +47,7 @@ export function badingView(root, { params, query, go, back }) {
 
   const counts = () => {
     const nb = S.commentCount(id), rebades = S.feed().filter((r) => r.rebadeOf === id && r.text);
-    $('[data-counts]', root).innerHTML = `<span class="t-meta"><b style="color:var(--text)">${S.compact(S.bading(id).likes)}</b> rires</span><span class="t-meta"><b style="color:var(--text)">${S.compact(nb)}</b> commentaires</span><span class="t-meta"><b style="color:var(--text)">${S.compact(S.bading(id).rebades)}</b> rebades</span>`;
+    $('[data-counts]', root).innerHTML = `<span class="t-meta"><b style="color:var(--text)">${S.compact(S.bading(id).likes)}</b> rires</span><span class="t-meta"><b style="color:var(--text)">${S.compact(nb)}</b> commentaires</span><span class="t-meta"><b style="color:var(--text)">${S.compact(S.bading(id).rebades)}</b> rebades</span>${S.bading(id).authorId === S.ME ? `<span class="t-meta"><b style="color:var(--text)">${S.compact(S.bading(id).views || 0)}</b> vues</span>` : ''}`;
     $('[data-tab="comments"]', root).textContent = `Commentaires${nb ? ` · ${nb}` : ''}`;
     $('[data-tab="rebades"]', root).textContent = `Rebades avec avis${rebades.length ? ` · ${rebades.length}` : ''}`;
     return rebades;

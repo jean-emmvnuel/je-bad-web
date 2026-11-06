@@ -14,7 +14,7 @@ export function feedView(root, { go }) {
       <h1 class="t-heading" style="flex:1" data-desk-title>Fil d'actualité</h1>
       <button class="icon-btn only-mobile" data-install-m aria-label="Installer l'app" hidden>${icon('download')}</button>
     </header>
-    <a class="prompt-card desk-only" href="#/compose">${avatar(S.me(), 44)}<span class="ph">Qu'est-ce qui t'est arrivé aujourd'hui ?</span><span class="btn btn-primary btn-sm">${icon('plus')} Bader</span></a>
+    <a class="prompt-card desk-only" href="#/compose">${avatar(S.me(), 44)}<span class="ph">Qu'est-ce qui t'est arrivé aujourd'hui ?</span>${icon('image')}</a>
     <div class="ptr" data-ptr aria-live="polite"><div style="position:relative">${laughingMark(44)}<span class="confetti-host" data-ptr-confetti style="position:absolute;left:50%;top:50%"></span></div><span data-ptr-label>${LABELS.pull}</span></div>
     <div data-list></div>`;
 

@@ -17,7 +17,8 @@ function seed() {
     u5: { id: 'u5', pseudo: 'Djidji_Kpakpato', verified: false, hue: 52 },
     u6: { id: 'u6', pseudo: 'YopougonFM', verified: true, hue: 265 },
   };
-  const B = (o) => ({ likedByMe: false, rebades: 0, shares: 0, ...o });
+  // Vues de démo proportionnelles aux rires (un bading est lu bien plus souvent qu'il ne fait rire).
+  const B = (o) => ({ likedByMe: false, rebades: 0, shares: 0, views: Math.round((o.likes ?? 0) * 6.3 + 41), ...o });
   const badings = [
     B({ id: 'm1', authorId: ME, anonymous: false, text: "J'ai dit à mon patron que j'étais malade. Il m'a vu au match le soir à la télé, au premier rang, en train de danser. Lundi il m'a demandé si le docteur était bon.", createdAt: now - 3 * h, likes: 13, rebades: 2, shares: 1 }),
     B({ id: 'm2', authorId: ME, anonymous: true, text: "J'ai fait semblant de comprendre l'anglais pendant toute une réunion. À la fin on m'a demandé de faire le résumé.", createdAt: now - 2 * d, likes: 64, rebades: 5, shares: 9 }),
@@ -63,7 +64,7 @@ function seed() {
     B({ id: 'n-3', authorId: 'u3', anonymous: false, text: "Ma tante a envoyé un vocal de 7 minutes pour dire « ok ». Les 6 premières minutes c'était le bruit du marché.", likes: 21, rebades: 2, shares: 3 }),
   ];
   return {
-    v: 4, onboarded: false, session: null, users, badings, comments, notifications, incoming,
+    v: 5, onboarded: false, session: null, users, badings, comments, notifications, incoming,
     draft: { text: '', anonymous: false, image: null }, recentStickers: [], customStickers, myStickers: [], mentionPolicy: 'everyone', favorites: [], blocked: [], postedToday: 0,
     badge: { status: 'refused', reason: 'il faut au moins 1 000 rires reçus sur tes badings signés', decidedAt: now - 3 * d },
     deletion: { status: 'none' }, pendingLink: null, notifEnabled: false, accounts: {}, pendingSignup: null,
@@ -78,6 +79,8 @@ if (state.v === 1) { state.v = 2; state.recentStickers = []; state.draft = { ...
 if (state.v === 2) { const s = seed(); state.v = 3; state.customStickers = s.customStickers; state.myStickers = []; state.comments.push(...s.comments.filter((c) => ['c11', 'c12', 'c13'].includes(c.id))); }
 // v3 → v4 : les avatars générés sont remplacés par une vraie photo de profil.
 if (state.v === 3) { state.v = 4; Object.values(state.users).forEach((u) => delete u.avatar); if (state.session?.user) delete state.session.user.avatar; }
+// v4 → v5 : compteur de vues sur chaque bading.
+if (state.v === 4) { state.v = 5; state.badings.forEach((b) => { if (b.views == null) b.views = Math.round((b.likes || 0) * 6.3 + (b.authorId === ME ? 0 : 41)); }); }
 if (state.v !== 3) state = seed();
 
 const listeners = new Set();
@@ -167,18 +170,20 @@ export function toggleLike(id) {
   const b = bading(id); if (!b) return;
   b.likes += b.likedByMe ? -1 : 1; b.likedByMe = !b.likedByMe; commit();
 }
+/** Une vue = une ouverture du bading en grand. En prod : comptée côté serveur, une fois par personne et par jour. */
+export function addView(id) { const b = bading(id); if (b) { b.views = (b.views || 0) + 1; commit(); } }
 export function share(id) { const b = bading(id); if (b) { b.shares += 1; commit(); } }
 /** `image` = { src (JPEG recadré, data URL), ratio } ou null. En prod : upload puis URL du CDN. */
 export function publish(text, anonymous, image = null) {
   const err = validate(text, !!image); if (err) return { ok: false, error: err };
   const id = `m${Date.now()}`;
-  state.badings.unshift({ id, authorId: ME, anonymous, text: text.trim(), ...(image ? { image: { src: image.src, ratio: image.ratio } } : {}), createdAt: Date.now(), likes: 0, likedByMe: false, rebades: 0, shares: 0 });
+  state.badings.unshift({ id, authorId: ME, anonymous, text: text.trim(), ...(image ? { image: { src: image.src, ratio: image.ratio } } : {}), createdAt: Date.now(), likes: 0, likedByMe: false, rebades: 0, shares: 0, views: 0 });
   state.postedToday += 1; state.draft = { text: '', anonymous: false, image: null }; commit();
   return { ok: true, id };
 }
 export function rebade(id, opinion, anonymous) {
   const t = bading(id); const origin = t?.rebadeOf ?? id;
-  state.badings.unshift({ id: `r${Date.now()}`, authorId: ME, anonymous, rebadeOf: origin, text: opinion.trim().slice(0, RULES.opinionMax), createdAt: Date.now(), likes: 0, likedByMe: false, rebades: 0, shares: 0 });
+  state.badings.unshift({ id: `r${Date.now()}`, authorId: ME, anonymous, rebadeOf: origin, text: opinion.trim().slice(0, RULES.opinionMax), createdAt: Date.now(), likes: 0, likedByMe: false, rebades: 0, shares: 0, views: 0 });
   const o = bading(origin); if (o) o.rebades += 1; commit();
 }
 export function remove(id) { const b = bading(id); if (b) { b.deleted = true; commit(); } }
@@ -256,3 +261,45 @@ export function timeAgo(ts) {
 }
 export function compact(n) { if (n < 1000) return String(n); if (n < 10_000) return `${(n / 1000).toFixed(1).replace('.0', '')} k`; return `${Math.round(n / 1000)} k`; }
 export const fmtDate = (ts) => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+/**
+ * Copie de mes données (droit d'accès, loi ivoirienne n° 2013-450) : tout ce qu'On Bade sait du compte
+ * connecté, avec ses statistiques. Sert à générer le PDF « Recevoir une copie de mes données ».
+ */
+export function myData() {
+  const u = state.users[ME], acct = state.session ?? {};
+  const all = state.badings.filter((b) => b.authorId === ME && !b.deleted);
+  const signed = all.filter((b) => !b.anonymous), anon = all.filter((b) => b.anonymous);
+  const originals = all.filter((b) => !b.rebadeOf), rebadesMade = all.filter((b) => b.rebadeOf);
+  const mineIds = new Set(all.map((b) => b.id));
+  const commentsWritten = state.comments.filter((c) => c.authorId === ME && !c.deleted);
+  const commentsReceived = state.comments.filter((c) => mineIds.has(c.badingId) && c.authorId !== ME && !c.deleted);
+  const laughedAt = state.badings.filter((b) => b.likedByMe && !b.deleted);
+  const commentLaughsGiven = state.comments.filter((c) => c.likedByMe && !c.deleted).length;
+  const sum = (arr, k) => arr.reduce((n, b) => n + (b[k] || 0), 0);
+  const myStickerIds = Object.values(state.customStickers || {}).filter((s) => s.ownerId === ME).map((s) => s.id);
+  return {
+    generatedAt: Date.now(),
+    account: {
+      pseudo: u?.pseudo, email: acct.email ?? '—', joinedAt: u?.joinedAt, verified: !!u?.verified, photo: !!u?.photo,
+      badge: state.badge, mentionPolicy: state.mentionPolicy, notifications: state.notifEnabled, blocked: state.blocked.map((id) => state.users[id]?.pseudo).filter(Boolean),
+      deletion: state.deletion,
+    },
+    stats: {
+      badings: originals.length, signed: signed.filter((b) => !b.rebadeOf).length, anonymous: anon.filter((b) => !b.rebadeOf).length, withImage: originals.filter((b) => b.image).length,
+      rebadesMade: rebadesMade.length,
+      laughsReceived: sum(all, 'likes'), laughsReceivedSigned: sum(signed, 'likes'), laughsReceivedAnon: sum(anon, 'likes'),
+      laughsGiven: laughedAt.length, commentLaughsGiven,
+      views: sum(all, 'views'), rebadesReceived: sum(all, 'rebades'), sharesReceived: sum(all, 'shares'),
+      commentsReceived: commentsReceived.length, commentsWritten: commentsWritten.length, stickersSent: commentsWritten.filter((c) => c.sticker).length,
+      commentLaughsReceived: sum(commentsWritten, 'likes'),
+      mentionsReceived: state.notifications.filter((n) => n.kind === 'mention').length,
+      favorites: state.favorites.length, stickersCreated: myStickerIds.length, stickersSaved: (state.myStickers || []).filter((id) => !myStickerIds.includes(id)).length,
+      best: [...originals].sort((a, b) => b.likes - a.likes)[0] ?? null,
+    },
+    badings: [...all].sort((a, b) => b.createdAt - a.createdAt).map((b) => ({ ...b, comments: state.comments.filter((c) => c.badingId === b.id && !c.deleted).length, origin: b.rebadeOf ? state.badings.find((x) => x.id === b.rebadeOf) : null })),
+    comments: [...commentsWritten].sort((a, b) => b.createdAt - a.createdAt).map((c) => ({ ...c, on: state.badings.find((b) => b.id === c.badingId) })),
+    laughedAt: laughedAt.map((b) => ({ ...b, authorName: b.anonymous ? 'Badeur anonyme' : state.users[b.authorId]?.pseudo ?? '?' })),
+    favorites: state.favorites.map((id) => state.badings.find((b) => b.id === id)).filter(Boolean).map((b) => ({ ...b, authorName: b.anonymous ? 'Badeur anonyme' : state.users[b.authorId]?.pseudo ?? '?' })),
+  };
+}

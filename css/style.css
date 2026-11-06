@@ -515,3 +515,8 @@ button.c-sticker:hover .stk { transform: rotate(var(--rot, 0deg)) scale(1.04); }
 /* Photo de profil : aperçu rond dans l'éditeur */
 .cropper-frame.round { border-radius: 50%; }
 .cropper-frame.round .g { display: none; }
+
+/* Ordinateur : pas de doublon. Sur le profil, la carte « moi » de gauche répète la carte du profil : on la cache. */
+body[data-nav="profile"] .left .me-card { display: none; }
+.side-links a[aria-current="page"] { background: var(--surface-2); }
+.prompt-card > svg { width: 22px; height: 22px; color: var(--text-3); flex: none; margin-right: 4px; }

@@ -1,9 +1,9 @@
 // Service worker On Bade : app hors ligne, chargement instantané, clic sur les notifications.
 // Change VERSION à chaque mise en ligne pour que les visiteurs reçoivent la nouvelle version.
-const VERSION = 'jebade-web-v13';
+const VERSION = 'jebade-web-v14';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css',
-  'js/app.js', 'js/pwa.js', 'js/store.js', 'js/components.js', 'js/ui.js', 'js/icons-data.js', 'js/notify.js', 'js/cropper.js', 'js/stickers.js',
+  'js/app.js', 'js/pwa.js', 'js/store.js', 'js/components.js', 'js/ui.js', 'js/icons-data.js', 'js/notify.js', 'js/cropper.js', 'js/pdf.js', 'js/export.js', 'js/stickers.js',
   'js/views/auth.js', 'js/views/bading.js', 'js/views/compose.js', 'js/views/feed.js', 'js/views/notifications.js',
   'js/views/onboarding.js', 'js/views/privacy.js', 'js/views/profile.js', 'js/views/settings.js',
   'data/privacy.json', 'assets/favicon.svg', 'assets/favicon.ico', 'assets/apple-touch-icon.png', 'assets/icon-192.png', 'assets/icon-512.png',

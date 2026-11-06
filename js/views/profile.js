@@ -21,7 +21,7 @@ export function profileView(root, { go }) {
     const u = me(), p = pub();
     const joined = new Date(u.joinedAt ?? Date.now()).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
     return `
-    <header class="topbar"><h1 class="t-heading" style="flex:1">Profil</h1><a class="icon-btn" href="#/settings" aria-label="Paramètres">${icon('settings')}</a></header>
+    <header class="topbar"><h1 class="t-heading" style="flex:1">Profil</h1><a class="icon-btn only-mobile" href="#/settings" aria-label="Paramètres">${icon('settings')}</a></header>
     <section class="profile-hero pf-card">
       <button class="pf-avatar" data-avatar aria-label="Changer ma photo de profil">
         ${avatar(u, 96)}

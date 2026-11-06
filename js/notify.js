@@ -30,7 +30,7 @@ export function simulateEngagement(id) {
   const timer = setInterval(() => {
     const b = S.bading(id); if (!b) return clearInterval(timer);
     tick += 1; const add = 1 + Math.floor(Math.random() * 4); laughs += add;
-    b.likes += add; if (tick % 3 === 0) b.rebades += 1;
+    b.likes += add; b.views = (b.views || 0) + add * 5 + Math.floor(Math.random() * 6); if (tick % 3 === 0) b.rebades += 1;
     if (tick === 3) {
       S.pushNotification({ kind: 'like', actorId: 'u1', others: Math.max(0, laughs - 1), badingId: id });
       notify('Ton bading fait rire 😂', `Koffi225 et ${Math.max(0, laughs - 1)} autres ont ri à « ${teaser(b.text)} »`, `/bading/${id}`);
