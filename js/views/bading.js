@@ -1,7 +1,8 @@
 import * as S from '../store.js';
 import { $, avatar, closeSheet, esc, icon, reduceMotion, rich, sheet, sheetItem, toast, verified } from '../ui.js';
 import { actionsRow, badingImage, card, confirmSheet, wireActions } from '../components.js';
-import { STICKERS, THEMES, stickerHtml } from '../stickers.js';
+import { STICKERS, THEMES, sticker as builtin, stickerHtml } from '../stickers.js';
+import { ACCEPT, openCropper, readImageFile } from '../cropper.js';
 import { simulateReply } from '../notify.js';
 
 export function badingView(root, { params, query, go, back }) {
@@ -36,7 +37,7 @@ export function badingView(root, { params, query, go, back }) {
     <div class="composer" data-composer>
       <div data-reply hidden style="display:flex;align-items:center;gap:6px;padding:0 4px"><span class="t-small muted" style="flex:1" data-reply-label></span><button class="icon-btn" style="width:28px;height:28px" data-cancel-reply aria-label="Annuler la réponse">${icon('x')}</button></div>
       <div class="sticker-picker" data-picker hidden>
-        <div class="sp-tabs" role="tablist">${THEMES.map(([k, l]) => `<button role="tab" data-st-tab="${k}">${l}</button>`).join('')}</div>
+        <div class="sp-tabs" role="tablist">${[THEMES[0], ['mine', 'Mes stickers'], ...THEMES.slice(1)].map(([k, l]) => `<button role="tab" data-st-tab="${k}">${l}</button>`).join('')}</div>
         <div class="sp-grid" data-st-grid></div>
       </div>
       <div class="row">${avatar(S.me(), 32)}<textarea rows="1" maxlength="600" placeholder="Ton commentaire…" aria-label="Ton commentaire"></textarea><button class="icon-btn sticker-btn" data-st-open aria-label="Envoyer un sticker" aria-expanded="false">${icon('sticker')}</button><button class="btn btn-primary btn-sm" data-send disabled>Publier</button></div>
@@ -65,7 +66,7 @@ export function badingView(root, { params, query, go, back }) {
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
         <div style="display:flex;align-items:center;gap:6px"><b style="font-size:14px">${esc(u?.pseudo ?? 'Badeur')}</b>${u?.verified ? verified() : ''}<span class="t-small" style="color:var(--text-3)">· ${S.timeAgo(c.createdAt)}</span></div>
         ${c.replyTo ? `<span class="t-small" style="color:var(--text-3)">en réponse à <span class="mention">@${esc(c.replyTo)}</span></span>` : ''}
-        ${c.sticker ? `<div class="c-sticker">${stickerHtml(c.sticker, reply ? 104 : 120)}</div>` : `<p style="overflow-wrap:anywhere">${rich(c.text)}</p>`}
+        ${c.sticker ? `<button class="c-sticker" data-c-a="sticker" aria-label="Ajouter ce sticker à mes stickers">${stickerHtml(c.sticker, reply ? 104 : 120)}</button>` : `<p style="overflow-wrap:anywhere">${rich(c.text)}</p>`}
         <div class="c-actions">
           <button data-c-a="like" class="${c.likedByMe ? 'on' : ''}" aria-label="${c.likedByMe ? 'Retirer mon rire' : 'Rire à ce commentaire'}">${icon('laugh')}${c.likes ? c.likes : ''}</button>
           <button data-c-a="reply">Répondre</button>
@@ -114,6 +115,7 @@ export function badingView(root, { params, query, go, back }) {
     const a = e.target.closest('[data-c-a]'); if (!a) return;
     const c = S.get().comments.find((x) => x.id === a.closest('[data-c]').dataset.c);
     if (a.dataset.cA === 'like') { S.toggleCommentLike(c.id); panel(); }
+    if (a.dataset.cA === 'sticker') openStickerSheet(c.sticker);
     if (a.dataset.cA === 'reply') { parent = c; $('[data-reply]', root).hidden = false; $('[data-reply-label]', root).innerHTML = `Réponse à <span class="mention">@${esc(S.user(c.authorId)?.pseudo)}</span>`; ta.placeholder = 'Ta réponse…'; ta.focus(); }
     if (a.dataset.cA === 'report') { const p = sheet({ title: 'Signaler ce commentaire', html: ['Haine', 'Harcèlement', 'Spam', 'Autre'].map((r) => sheetItem('r', r)).join('') }); p.onclick = (ev) => { if (ev.target.closest('[data-act]')) { closeSheet(); toast('Merci, la modération va regarder ça.'); } }; }
     if (a.dataset.cA === 'delete') {
@@ -138,11 +140,37 @@ export function badingView(root, { params, query, go, back }) {
   ta.onkeydown = (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) send.click(); };
   // ─── Stickers (F8) : un toucher = envoi direct ───
   const picker = $('[data-picker]', root), stBtn = $('[data-st-open]', root);
-  let stTab = (S.get().recentStickers || []).length ? 'recent' : 'reactions';
+  let stTab = (S.get().recentStickers || []).length ? 'recent' : 'mine';
   const drawStickers = () => {
-    const ids = stTab === 'recent' ? S.get().recentStickers || [] : STICKERS.filter((x) => x.theme === stTab).map((x) => x.id);
+    const st = S.get();
+    const ids = (stTab === 'recent' ? st.recentStickers || [] : stTab === 'mine' ? st.myStickers || [] : STICKERS.filter((x) => x.theme === stTab).map((x) => x.id)).filter((sid) => !S.customSticker(sid)?.removed);
     root.querySelectorAll('[data-st-tab]').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.stTab === stTab)));
-    $('[data-st-grid]', root).innerHTML = ids.length ? ids.map((sid) => `<button class="sp-item" data-st="${sid}">${stickerHtml(sid, 92)}</button>`).join('') : '<p class="t-small muted" style="padding:12px">Tes stickers récents apparaîtront ici.</p>';
+    const create = stTab === 'mine' ? `<label class="sp-create" title="Créer un sticker à partir d'une photo">${icon('plus')}<span>Créer</span><input type="file" accept="${ACCEPT}" data-st-file hidden/></label>` : '';
+    const items = ids.map((sid) => `<div class="sp-cell"><button class="sp-item" data-st="${sid}" aria-label="Envoyer ce sticker">${stickerHtml(sid, 92)}</button>${stTab === 'mine' ? `<button class="sp-remove" data-st-rm="${sid}" aria-label="Retirer de mes stickers">${icon('x')}</button>` : ''}</div>`).join('');
+    const empty = stTab === 'mine' ? (ids.length ? '' : '<p class="t-small muted sp-empty">Crée un sticker avec une photo, ou touche le sticker d’un Badeur dans les commentaires pour l’ajouter ici.</p>') : ids.length ? '' : '<p class="t-small muted sp-empty">Tes stickers récents apparaîtront ici.</p>';
+    $('[data-st-grid]', root).innerHTML = create + items + empty;
+    $('[data-st-file]', root)?.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0]; e.target.value = '';
+      try {
+        const src = await readImageFile(file);
+        const r = await openCropper(src, {}, { ratios: ['1:1'], outMax: 512, title: 'Créer un sticker' }); if (!r) return;
+        if (!S.createSticker(r.dataUrl)) return toast(`${S.RULES.myStickersMax} stickers maximum : retire-en un d’abord.`);
+        stTab = 'mine'; drawStickers(); toast('Sticker créé et ajouté à tes stickers');
+      } catch (x) { if (x.message !== 'none') toast(x.message); }
+    });
+  };
+  // Comme sur TikTok : toucher un sticker dans un commentaire pour l'ajouter à sa collection.
+  const openStickerSheet = (sid) => {
+    const c = S.customSticker(sid), owner = c ? S.user(c.ownerId) : null, mine = S.get().myStickers.includes(sid);
+    const who = builtin(sid) ? 'Sticker On Bade' : c?.ownerId === S.ME ? 'Ton sticker' : `Sticker créé par @${esc(owner?.pseudo ?? 'un Badeur')}`;
+    const action = builtin(sid) ? '<p class="muted" style="text-align:center">Il est déjà dans ta bibliothèque de stickers.</p>'
+      : c?.removed ? '' : mine ? '<p class="muted" style="text-align:center">Il est déjà dans tes stickers.</p>'
+      : `<button class="btn btn-primary btn-block" data-save-st>${icon('bookmark')} Ajouter à mes stickers</button>`;
+    const p = sheet({ html: `<div class="pad" style="display:flex;flex-direction:column;align-items:center;gap:16px">${stickerHtml(sid, 150)}<span class="t-small" style="color:var(--text-3)">${who}</span>${action}</div>` });
+    p.querySelector('[data-save-st]')?.addEventListener('click', () => {
+      const r = S.saveSticker(sid); closeSheet();
+      toast(r === 'full' ? `${S.RULES.myStickersMax} stickers maximum : retire-en un d’abord.` : 'Ajouté à tes stickers');
+    });
   };
   const togglePicker = (show = picker.hidden) => {
     picker.hidden = !show; stBtn.setAttribute('aria-expanded', String(show)); stBtn.classList.toggle('on', show);
@@ -151,6 +179,8 @@ export function badingView(root, { params, query, go, back }) {
   stBtn.onclick = () => togglePicker();
   root.querySelectorAll('[data-st-tab]').forEach((t) => (t.onclick = () => { stTab = t.dataset.stTab; drawStickers(); }));
   $('[data-st-grid]', root).onclick = (e) => {
+    const rm = e.target.closest('[data-st-rm]')?.dataset.stRm;
+    if (rm) { S.unsaveSticker(rm); drawStickers(); toast('Retiré de tes stickers'); return; }
     const sid = e.target.closest('[data-st]')?.dataset.st; if (!sid) return;
     togglePicker(false); posted(S.addComment(id, '', parent ?? undefined, sid));
   };

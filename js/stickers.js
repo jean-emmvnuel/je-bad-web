@@ -19,11 +19,18 @@ export const STICKERS = [
   { id: 'wouya', theme: 'nouchi', emoji: '🌪️', label: 'Wouyaya', bg: '#ff5a5f', fg: '#ffffff', rot: 5 },
 ];
 export const THEMES = [['recent', 'Récents'], ['reactions', 'Réactions'], ['nouchi', 'Nouchi']];
+import { customSticker } from './store.js';
+
 export const sticker = (id) => STICKERS.find((s) => s.id === id);
 
 const esc = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 /** Un sticker dessiné en HTML/CSS (contour blanc, légère inclinaison). `size` = largeur en px. */
 export function stickerHtml(id, size = 128) {
+  const c = customSticker(id);
+  if (c) {
+    if (c.removed) return `<span class="stk stk-removed" style="--w:${size}px">Sticker retiré par la modération</span>`;
+    return `<span class="stk stk-img" style="--w:${size}px" role="img" aria-label="${c.label ? `Sticker ${esc(c.label)}` : 'Sticker personnel'}"><img src="${c.src}" alt="" draggable="false"/></span>`;
+  }
   const s = sticker(id); if (!s) return '';
   return `<span class="stk" style="--w:${size}px;--sbg:${s.bg};--sfg:${s.fg};--rot:${s.rot}deg" role="img" aria-label="Sticker ${esc(s.label)}"><span class="stk-e">${s.emoji}</span><span class="stk-t">${esc(s.label)}</span></span>`;
 }

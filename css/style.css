@@ -399,7 +399,7 @@ button.srow:hover { background: var(--surface-2); }
 .cropper-frame .h-sw { left: -4px; bottom: -4px; border-left-width: 5px; border-bottom-width: 5px; cursor: nesw-resize; }
 .cropper-frame .h-se { right: -4px; bottom: -4px; border-right-width: 5px; border-bottom-width: 5px; cursor: nwse-resize; }
 .cropper-tools { padding: 12px 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; max-width: 560px; width: 100%; margin: 0 auto; }
-.cropper-tools .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.cropper-tools .seg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 .cropper-tools .seg button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: var(--r-md); background: var(--surface); color: var(--text-2); font-size: 12px; }
 .cropper-tools .seg button b { font-size: 15px; color: var(--text); }
 .cropper-tools .seg button[aria-checked="true"] { background: var(--brand-soft); color: var(--brand-ink); box-shadow: inset 0 0 0 1.5px var(--brand-ink); }
@@ -422,3 +422,17 @@ button.srow:hover { background: var(--surface-2); }
 .sp-item { display: grid; place-items: center; padding: 6px 0; border-radius: var(--r-md); transition: transform 0.15s; }
 .sp-item:hover { transform: scale(1.06); }
 .sp-item:active { transform: scale(0.94); }
+
+/* Stickers personnels (F8, comme sur TikTok) */
+.stk-img { padding: 0; min-height: 0; height: var(--w); background: var(--surface-2); overflow: hidden; transform: none; }
+.stk-img img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
+.stk-removed { min-height: calc(var(--w) * 0.6); background: none; box-shadow: inset 0 0 0 1px var(--line); color: var(--text-3); font-size: 12px; transform: none; padding: 8px; }
+button.c-sticker { display: block; text-align: left; border-radius: var(--r-lg); cursor: pointer; }
+button.c-sticker:hover .stk { transform: rotate(var(--rot, 0deg)) scale(1.04); }
+.sp-cell { position: relative; display: grid; place-items: center; }
+.sp-remove { position: absolute; top: -6px; right: 2px; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-2); color: var(--text-2); display: grid; place-items: center; box-shadow: 0 0 0 2px var(--surface); }
+.sp-remove svg { width: 14px; height: 14px; }
+.sp-remove:hover { background: var(--danger); color: #fff; }
+.sp-create { width: 92px; height: 92px; margin: 0 auto; border-radius: 18px; border: 2px dashed var(--brand-ink); color: var(--brand-ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-weight: 600; font-size: 13px; cursor: pointer; }
+.sp-create:hover { background: var(--brand-soft); }
+.sp-empty { grid-column: 1 / -1; padding: 4px 8px; }

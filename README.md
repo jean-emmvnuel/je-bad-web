@@ -32,8 +32,8 @@ Ce dépôt est la **version web** de l'app mobile ([jean-emmvnuel/jebade](https:
 | 🔐 | **Inscription** e-mail + mot de passe (afficher/masquer, confirmation), pseudo + charte du Badeur ; **connexion** et mot de passe oublié |
 | 📰 | **Fil** façon X : en-tête qui se replie, entrée des cartes en cascade, **pull-to-refresh** où le b rit pendant le chargement |
 | 😂 | **Rire** avec explosion de **confettis** (physique GSAP) |
-| 🖼️ | **Bading en image** : texte, image ou les deux ; **recadrage avant publication** (libre, 1:1, 4:5, 16:9), zoom, rotation, déplacement ; JPEG 1 080 px max, métadonnées supprimées |
-| 💬 | **Commentaires et réponses** en texte ou en **sticker** (16 stickers On Bade : réactions et nouchi, onglet Récents), traits de fil, repli des réponses, suppression avec confirmation |
+| 🖼️ | **Bading en image** : texte, image ou les deux ; **recadrage avant publication** en portrait 4:5 ou carré 1:1 (fil uniforme), zoom, rotation, déplacement ; légende de 280 caractères max ; JPEG 1 080 px max, métadonnées supprimées |
+| 💬 | **Commentaires et réponses** en texte ou en **sticker** : 16 stickers On Bade (réactions, nouchi) + **stickers personnels** comme sur TikTok (créés depuis une photo, ou enregistrés en touchant le sticker d'un Badeur ; collection de 50), traits de fil, repli des réponses, suppression avec confirmation |
 | 🔁 | **Rebade** direct ou avec avis · 📤 **Partage** WhatsApp, Facebook, lien dynamique, **image PNG générée** (canvas) |
 | 🔖 | **Favoris**, 🎭 **mode anonyme**, @mentions avec suggestions, brouillon gardé |
 | 👤 | **Profil** : statistiques qui défilent, onglets Badings / Favoris / Anonymes, **20 avatars « Badeur »** au hasard |

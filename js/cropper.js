@@ -1,12 +1,12 @@
-// Recadrage d'image avant publication (F1, RG2) : formats libre, 1:1, 4:5, 16:9,
-// rotation, zoom (molette, curseur, pincement), déplacement et poignées d'angle.
+// Recadrage d'image avant publication (F1, RG2). Pour un fil uniforme, deux formats seulement :
+// portrait 4:5 (par défaut) et carré 1:1. Rotation, zoom (molette, curseur, pincement), déplacement, poignées.
 // Sortie : JPEG 1 080 px de large maximum, sans métadonnées (le canvas ne les recopie pas).
 import { esc, icon, reduceMotion } from './ui.js';
 
 export const MAX_BYTES = 10 * 1024 * 1024;
 export const ACCEPT = 'image/jpeg,image/png,image/webp';
-const RATIOS = [['free', 'Libre', null], ['1:1', 'Carré', 1], ['4:5', 'Portrait', 4 / 5], ['16:9', 'Paysage', 16 / 9]];
-const OUT_MAX = 1080, MIN_FRAME = 72, PAD = 20;
+const ALL_RATIOS = [['4:5', 'Portrait', 4 / 5], ['1:1', 'Carré', 1]];
+const MIN_FRAME = 72, PAD = 20;
 
 /** Lit un fichier choisi : refuse les formats et tailles hors règle. */
 export function readImageFile(file) {
@@ -22,30 +22,33 @@ export function readImageFile(file) {
 
 /**
  * Ouvre l'éditeur plein écran. `src` = data URL de l'original.
+ * `opts.ratios` (['4:5', '1:1'] ; ['1:1'] pour un sticker), `opts.outMax` (1 080 ; 512 pour un sticker), `opts.title`.
  * Résout { dataUrl, ratio, w, h, crop } (crop = réglages pour rouvrir l'éditeur) ou null si annulé.
  */
-export function openCropper(src, initial = {}) {
+export function openCropper(src, initial = {}, opts = {}) {
   return new Promise((resolve) => {
     const img = new Image();
-    img.onload = () => mount(img, initial, resolve);
+    img.onload = () => mount(img, initial, resolve, opts);
     img.onerror = () => resolve(null);
     img.src = src;
   });
 }
 
-function mount(img, initial, resolve) {
+function mount(img, initial, resolve, { ratios = ['4:5', '1:1'], outMax = 1080, title = 'Recadrer' } = {}) {
+  const RATIOS = ALL_RATIOS.filter((r) => ratios.includes(r[0]));
+  const OUT_MAX = outMax;
   const root = document.createElement('div');
   root.className = 'cropper';
   root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', "Recadrer l'image");
   root.innerHTML = `
-    <header class="cropper-bar"><button class="btn btn-ghost btn-sm" data-cancel>Annuler</button><h2 class="t-heading">Recadrer</h2><button class="btn btn-primary btn-sm" data-ok>Valider</button></header>
+    <header class="cropper-bar"><button class="btn btn-ghost btn-sm" data-cancel>Annuler</button><h2 class="t-heading">${esc(title)}</h2><button class="btn btn-primary btn-sm" data-ok>Valider</button></header>
     <div class="cropper-stage" data-stage>
       <img alt="" draggable="false" data-img/>
       <div class="cropper-frame" data-frame><i class="g g1"></i><i class="g g2"></i><i class="g g3"></i><i class="g g4"></i>
         ${['nw', 'ne', 'sw', 'se'].map((c) => `<span class="h h-${c}" data-h="${c}"></span>`).join('')}</div>
     </div>
     <div class="cropper-tools">
-      <div class="seg" role="radiogroup" aria-label="Format">${RATIOS.map(([k, l]) => `<button role="radio" data-r="${k}"><b>${k === 'free' ? '⤢' : esc(k)}</b><span>${l}</span></button>`).join('')}</div>
+      ${RATIOS.length > 1 ? `<div class="seg" role="radiogroup" aria-label="Format">${RATIOS.map(([k, l]) => `<button role="radio" data-r="${k}"><b>${esc(k)}</b><span>${l}</span></button>`).join('')}</div>` : ''}
       <div class="cropper-row"><span class="t-small muted">${icon('image')}</span><input type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom" data-zoom/><button class="icon-btn" data-rot aria-label="Tourner de 90°">${icon('rotate')}</button></div>
     </div>`;
   document.body.appendChild(root);
@@ -53,9 +56,9 @@ function mount(img, initial, resolve) {
   const stage = root.querySelector('[data-stage]'), el = root.querySelector('[data-img]'), frameEl = root.querySelector('[data-frame]'), zoom = root.querySelector('[data-zoom]');
   el.src = img.src;
 
-  let ratioKey = initial.ratioKey ?? 'free', rot = initial.rot ?? 0;
+  let ratioKey = ratios.includes(initial.ratioKey) ? initial.ratioKey : ratios[0], rot = initial.rot ?? 0;
   let SW, SH, W, H, minS, s, cx, cy, f; // f = cadre {x, y, w, h} dans la scène
-  const ratioOf = () => RATIOS.find((r) => r[0] === ratioKey)[2] ?? W / H;
+  const ratioOf = () => RATIOS.find((r) => r[0] === ratioKey)[2];
   const dims = () => { W = rot % 180 ? img.naturalHeight : img.naturalWidth; H = rot % 180 ? img.naturalWidth : img.naturalHeight; };
 
   function reset() {

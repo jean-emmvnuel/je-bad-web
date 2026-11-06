@@ -4,7 +4,7 @@
 const min = 60_000, h = 60 * min, d = 24 * h;
 export const ME = 'me';
 
-export const RULES = { minLength: 10, maxLength: 1000, opinionMax: 280, commentMax: 500, dailyLimit: 20, maxMentions: 5, badge: { minAgeDays: 30, minBadings: 10 }, badgeRetryDays: 30, deletionDays: 30 };
+export const RULES = { minLength: 10, maxLength: 1000, captionMax: 280, myStickersMax: 50, opinionMax: 280, commentMax: 500, dailyLimit: 20, maxMentions: 5, badge: { minAgeDays: 30, minBadings: 10 }, badgeRetryDays: 30, deletionDays: 30 };
 const BANNED = ['connard', 'pute', 'nègre', 'tuer'];
 
 function seed() {
@@ -41,7 +41,16 @@ function seed() {
     C({ id: 'c8', badingId: 'b4', authorId: 'u6', text: '', sticker: 'ehhh', createdAt: now - 55 * min, likes: 23 }),
     C({ id: 'c9', badingId: 'b4', authorId: 'u4', text: '', sticker: 'mort', createdAt: now - 50 * min, parentId: 'c1', replyTo: 'AwaLaGo', likes: 6 }),
     C({ id: 'c10', badingId: 'b2', authorId: 'u1', text: '', sticker: 'gate', createdAt: now - 25 * min, likes: 14 }),
+    C({ id: 'c11', badingId: 'b1', authorId: 'u2', text: '', sticker: 'us2', createdAt: now - 6 * min, likes: 14 }),
+    C({ id: 'c12', badingId: 'b1', authorId: 'u6', text: '', sticker: 'us3', createdAt: now - 4 * min, likes: 3 }),
+    C({ id: 'c13', badingId: 'b4', authorId: 'u1', text: '', sticker: 'us1', createdAt: now - 45 * min, parentId: 'c1', replyTo: 'AwaLaGo', likes: 6 }),
   ];
+  // Stickers personnels de démo (créés par d'autres Badeurs) pour tester « Ajouter à mes stickers ».
+  const customStickers = {
+    us1: { id: 'us1', ownerId: 'u1', label: "Gbaka boss", createdAt: now - 3 * d, src: `data:image/svg+xml,${encodeURIComponent("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><rect x=\"16\" y=\"16\" width=\"480\" height=\"480\" rx=\"96\" fill=\"#ffb547\"/><rect x=\"70\" y=\"150\" width=\"372\" height=\"190\" rx=\"40\" fill=\"#1a1919\"/><rect x=\"100\" y=\"180\" width=\"70\" height=\"60\" rx=\"10\" fill=\"#5ab0ff\"/><rect x=\"190\" y=\"180\" width=\"70\" height=\"60\" rx=\"10\" fill=\"#5ab0ff\"/><rect x=\"280\" y=\"180\" width=\"70\" height=\"60\" rx=\"10\" fill=\"#5ab0ff\"/><rect x=\"370\" y=\"180\" width=\"44\" height=\"60\" rx=\"10\" fill=\"#5ab0ff\"/><circle cx=\"150\" cy=\"345\" r=\"38\" fill=\"#1a1919\" stroke=\"#ffb547\" stroke-width=\"14\"/><circle cx=\"362\" cy=\"345\" r=\"38\" fill=\"#1a1919\" stroke=\"#ffb547\" stroke-width=\"14\"/><text x=\"256\" y=\"120\" text-anchor=\"middle\" font-family=\"Arial Black, Arial, sans-serif\" font-weight=\"900\" font-size=\"70\" fill=\"#1a1919\">GBAKA</text><text x=\"256\" y=\"455\" text-anchor=\"middle\" font-family=\"Arial Black, Arial, sans-serif\" font-weight=\"900\" font-size=\"64\" fill=\"#1a1919\">BOSS</text></svg>")}` },
+    us2: { id: 'us2', ownerId: 'u2', label: "Tantie a dit non", createdAt: now - 4 * d, src: `data:image/svg+xml,${encodeURIComponent("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><rect x=\"16\" y=\"16\" width=\"480\" height=\"480\" rx=\"96\" fill=\"#ff6fa8\"/><circle cx=\"256\" cy=\"230\" r=\"140\" fill=\"#8a4b2a\"/><path d=\"M116 210 Q256 40 396 210 Q330 130 256 140 Q182 130 116 210Z\" fill=\"#1a1919\"/><path d=\"M180 205 l50 18 M332 205 l-50 18\" stroke=\"#1a1919\" stroke-width=\"14\" stroke-linecap=\"round\"/><circle cx=\"208\" cy=\"240\" r=\"14\" fill=\"#1a1919\"/><circle cx=\"304\" cy=\"240\" r=\"14\" fill=\"#1a1919\"/><path d=\"M206 305 Q256 280 306 305\" stroke=\"#1a1919\" stroke-width=\"14\" fill=\"none\" stroke-linecap=\"round\"/><text x=\"256\" y=\"455\" text-anchor=\"middle\" font-family=\"Arial Black, Arial, sans-serif\" font-weight=\"900\" font-size=\"72\" fill=\"#1a1919\">NON !</text></svg>")}` },
+    us3: { id: 'us3', ownerId: 'u6', label: "Yop City", createdAt: now - 5 * d, src: `data:image/svg+xml,${encodeURIComponent("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><rect x=\"16\" y=\"16\" width=\"480\" height=\"480\" rx=\"96\" fill=\"#9810e6\"/><rect x=\"70\" y=\"250\" width=\"70\" height=\"170\" fill=\"#ede3fa\"/><rect x=\"155\" y=\"190\" width=\"80\" height=\"230\" fill=\"#ffffff\"/><rect x=\"250\" y=\"230\" width=\"70\" height=\"190\" fill=\"#ede3fa\"/><rect x=\"335\" y=\"170\" width=\"90\" height=\"250\" fill=\"#ffffff\"/><circle cx=\"390\" cy=\"105\" r=\"42\" fill=\"#ffb547\"/><text x=\"256\" y=\"130\" text-anchor=\"middle\" font-family=\"Arial Black, Arial, sans-serif\" font-weight=\"900\" font-size=\"74\" fill=\"#ffffff\">YOP</text><text x=\"256\" y=\"480\" text-anchor=\"middle\" font-family=\"Arial Black, Arial, sans-serif\" font-weight=\"900\" font-size=\"54\" fill=\"#ffffff\">CITY</text></svg>")}` },
+  };
   const notifications = [
     { id: 'n1', kind: 'like', actorId: 'u1', others: 12, badingId: 'm1', createdAt: now - 8 * min, read: false },
     { id: 'n2', kind: 'mention', actorId: null, badingId: 'b5', createdAt: now - 40 * min, read: false },
@@ -54,8 +63,8 @@ function seed() {
     B({ id: 'n-3', authorId: 'u3', anonymous: false, text: "Ma tante a envoyé un vocal de 7 minutes pour dire « ok ». Les 6 premières minutes c'était le bruit du marché.", likes: 21, rebades: 2, shares: 3 }),
   ];
   return {
-    v: 2, onboarded: false, session: null, users, badings, comments, notifications, incoming,
-    draft: { text: '', anonymous: false, image: null }, recentStickers: [], mentionPolicy: 'everyone', favorites: [], blocked: [], postedToday: 0,
+    v: 3, onboarded: false, session: null, users, badings, comments, notifications, incoming,
+    draft: { text: '', anonymous: false, image: null }, recentStickers: [], customStickers, myStickers: [], mentionPolicy: 'everyone', favorites: [], blocked: [], postedToday: 0,
     badge: { status: 'refused', reason: 'il faut au moins 10 badings publiés', decidedAt: now - 3 * d },
     deletion: { status: 'none' }, pendingLink: null, notifEnabled: false, accounts: {}, pendingSignup: null,
   };
@@ -66,7 +75,8 @@ let state;
 try { state = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch { state = seed(); }
 // Migration v1 → v2 (images et stickers) sans perdre la session ni les badings de la démo.
 if (state.v === 1) { state.v = 2; state.recentStickers = []; state.draft = { ...state.draft, image: null }; state.comments.push(...seed().comments.filter((c) => c.sticker)); }
-if (state.v !== 2) state = seed();
+if (state.v === 2) { const s = seed(); state.v = 3; state.customStickers = s.customStickers; state.myStickers = []; state.comments.push(...s.comments.filter((c) => ['c11', 'c12', 'c13'].includes(c.id))); }
+if (state.v !== 3) state = seed();
 
 const listeners = new Set();
 let saveTimer;
@@ -106,7 +116,7 @@ export const countMentions = (t) => (t.match(/@[\w.]+/g) ?? []).length;
 export function validate(text, hasImage = false) {
   const t = text.trim();
   if (!hasImage && t.length < RULES.minLength) return 'too_short';
-  if (t.length > RULES.maxLength) return 'too_long';
+  if (t.length > (hasImage ? RULES.captionMax : RULES.maxLength)) return hasImage ? 'caption_too_long' : 'too_long';
   if (countMentions(t) > RULES.maxMentions) return 'too_many_mentions';
   if (state.postedToday >= RULES.dailyLimit) return 'daily_limit';
   if (BANNED.some((w) => t.toLowerCase().includes(w))) return 'blocked_word';
@@ -192,6 +202,22 @@ export function addComment(badingId, text, parent, stickerId = null) {
   const c = { id: `c${Date.now()}`, badingId, authorId: ME, text: t, ...(stickerId ? { sticker: stickerId } : {}), createdAt: Date.now(), parentId: parent ? parent.parentId ?? parent.id : null, replyTo: parent ? state.users[parent.authorId]?.pseudo : undefined, likes: 0, likedByMe: false };
   state.comments.push(c); commit(); return c;
 }
+// ─── Stickers personnels (F8, comme sur TikTok) ───
+/** Crée un sticker à partir d'une image carrée (512 px) et l'ajoute à ma collection. */
+export function createSticker(src) {
+  if ((state.myStickers || []).length >= RULES.myStickersMax) return null;
+  const id = `my${Date.now()}`;
+  state.customStickers[id] = { id, ownerId: ME, src, createdAt: Date.now() };
+  state.myStickers = [id, ...(state.myStickers || [])]; commit(); return id;
+}
+/** Enregistre le sticker d'un autre Badeur (touché dans un commentaire). */
+export function saveSticker(id) {
+  if (state.myStickers.includes(id)) return 'already';
+  if (state.myStickers.length >= RULES.myStickersMax) return 'full';
+  state.myStickers = [id, ...state.myStickers]; commit(); return 'ok';
+}
+export function unsaveSticker(id) { state.myStickers = state.myStickers.filter((x) => x !== id); commit(); }
+export const customSticker = (id) => state.customStickers?.[id];
 export function removeComment(id) { state.comments.forEach((c) => { if (c.id === id || c.parentId === id) c.deleted = true; }); commit(); }
 export function toggleCommentLike(id) { const c = state.comments.find((x) => x.id === id); if (c) { c.likes += c.likedByMe ? -1 : 1; c.likedByMe = !c.likedByMe; commit(); } }
 export function setNotifEnabled(v) { state.notifEnabled = v; commit(); }

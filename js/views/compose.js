@@ -6,6 +6,7 @@ import { ACCEPT, openCropper, readImageFile } from '../cropper.js';
 const ERRORS = {
   too_short: `Encore un peu : un bading fait au moins ${S.RULES.minLength} caractères.`,
   too_long: `Trop long : ${S.RULES.maxLength} caractères maximum.`,
+  caption_too_long: `Avec une image, la légende fait ${S.RULES.captionMax} caractères maximum.`,
   daily_limit: `Tu as atteint ${S.RULES.dailyLimit} badings aujourd'hui. Reviens demain !`,
   blocked_word: 'Un mot de ton bading n’est pas accepté par la charte. Reformule-le.',
   too_many_mentions: `${S.RULES.maxMentions} mentions maximum par bading.`,
@@ -32,7 +33,7 @@ export function composeView(root, { go, back }) {
     </div>
     <div class="compose-tools">
       <label class="tool-btn" title="Ajouter une image (JPG, PNG ou WebP, 10 Mo max.)">${icon('image')}<span>Image</span><input type="file" accept="${ACCEPT}" data-file hidden/></label>
-      <span class="t-small" style="color:var(--text-3)">Recadre-la avant de publier</span>
+      <span class="t-small" style="color:var(--text-3)">Portrait 4:5 ou carré, légende de ${S.RULES.captionMax} caractères max.</span>
     </div>
     <div style="border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:6px">
       <div style="display:flex;align-items:center;gap:12px">
@@ -52,10 +53,11 @@ export function composeView(root, { go, back }) {
     gsap.fromTo('[data-who], [data-av]', { opacity: 0, y: 4 }, { opacity: 1, y: 0, duration: 0.25 });
   };
   const refresh = () => {
-    const len = ta.value.trim().length, tooLong = len > S.RULES.maxLength;
+    const max = image ? S.RULES.captionMax : S.RULES.maxLength;
+    const len = ta.value.trim().length, tooLong = len > max;
     pub.disabled = image ? tooLong : len < S.RULES.minLength || tooLong;
     ta.placeholder = image ? 'Ajoute une légende (facultatif)…' : "Qu'est-ce qui t'est arrivé ?";
-    const c = $('[data-count]', root); c.textContent = `${len} / ${S.RULES.maxLength}`; c.style.color = tooLong ? 'var(--danger)' : len > S.RULES.maxLength * 0.9 ? 'var(--brand-ink)' : 'var(--text-3)';
+    const c = $('[data-count]', root); c.textContent = `${len} / ${max}`; c.style.color = tooLong ? 'var(--danger)' : len > max * 0.9 ? 'var(--brand-ink)' : 'var(--text-3)';
     const left = S.RULES.dailyLimit - S.get().postedToday;
     $('[data-left]', root).textContent = left <= 5 ? `Encore ${Math.max(0, left)} bading${left > 1 ? 's' : ''} aujourd'hui` : 'Tape @ pour mentionner quelqu’un';
     // Suggestions @mention pour le mot sous le curseur
