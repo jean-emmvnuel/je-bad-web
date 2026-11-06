@@ -38,10 +38,10 @@ export function settingsView(root, { go, back }) {
             : row('delete', 'trash', 'Demander la suppression de mon compte', '', { danger: true })}
         </div></div>
         <div class="section"><h3>Session</h3><div class="group">${row('logout', 'logOut', 'Se déconnecter')}</div></div>
-        <a class="credit" href="https://monportfolio-blush-phi.vercel.app/" target="_blank" rel="noopener" aria-label="Créé par Jean Emmanuel Ahossi, ouvrir son portfolio">
+        <a class="credit" href="https://jeanemmanuel-portfolio-gamma.vercel.app/" target="_blank" rel="noopener" aria-label="Créé par Jean Emmanuel Ahossi, ouvrir son portfolio">
           ${logo(28)}<span class="t-small" style="color:var(--text-3)">Je Bade · ORIVERSE</span>
           <span>Créé par <b style="color:var(--text)">Jean Emmanuel Ahossi</b></span>
-          <span class="t-small" style="color:var(--brand-ink);text-decoration:underline">monportfolio-blush-phi.vercel.app</span>
+          <span class="t-small" style="color:var(--brand-ink);text-decoration:underline">jeanemmanuel-portfolio-gamma.vercel.app</span>
         </a>
       </div>`;
     root.querySelector('[data-back]').onclick = () => back('/profile');

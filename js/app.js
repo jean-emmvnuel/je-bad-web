@@ -140,7 +140,7 @@ function shell() {
           <p class="muted">Une vraie app sur ton téléphone ou ton ordinateur : ouverture instantanée, notifications, et les liens partagés s'ouvrent directement dedans.</p>
           <button class="btn btn-primary btn-sm" data-install>${icon('download')} Installer</button>
         </div>
-        <footer>Je Bade · une app ORIVERSE<br/>Créé par <a href="https://monportfolio-blush-phi.vercel.app/" target="_blank" rel="noopener">Jean Emmanuel Ahossi</a> · <a href="#/privacy">Confidentialité</a></footer>
+        <footer>Je Bade · une app ORIVERSE<br/>Créé par <a href="https://jeanemmanuel-portfolio-gamma.vercel.app/" target="_blank" rel="noopener">Jean Emmanuel Ahossi</a> · <a href="#/privacy">Confidentialité</a></footer>
       </aside>
     </div>
     <nav class="tabbar" aria-label="Onglets">

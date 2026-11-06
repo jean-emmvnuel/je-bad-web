@@ -86,6 +86,6 @@ Les liens partagés ont la forme `…/?b=<id>` (l'ancienne forme `…/#/b/<id>` 
 
 <div align="center">
 
-**Je Bade** · une app **ORIVERSE** · Créée par **Jean Emmanuel Ahossi** — [portfolio](https://monportfolio-blush-phi.vercel.app/)
+**Je Bade** · une app **ORIVERSE** · Créée par **Jean Emmanuel Ahossi** — [portfolio](https://jeanemmanuel-portfolio-gamma.vercel.app/)
 
 </div>
