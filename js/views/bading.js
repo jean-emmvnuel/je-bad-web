@@ -24,12 +24,12 @@ export function badingView(root, { params, query, go, back }) {
   let parent = null;
 
   root.innerHTML = `${header}
-    <section style="padding:16px;display:flex;flex-direction:column;gap:16px" data-hero>
+    <section class="bub-hero ${b.anonymous ? 'anon' : ''}" data-hero>
       <div style="display:flex;align-items:center;gap:12px">${avatar(b.anonymous ? null : user, 48)}<div><div style="display:flex;align-items:center;gap:6px"><b style="${b.anonymous ? 'color:var(--text-2)' : ''}">${esc(name)}</b>${user?.verified && !b.anonymous ? verified() : ''}</div>${handle ? `<span class="t-meta">${esc(handle)}</span>` : ''}</div></div>
       ${b.text ? `<p class="t-story" style="font-size:19px">${rich(b.text)}</p>` : ''}
       ${b.image ? `<button class="zoom-img" data-zoom-img aria-label="Agrandir l'image">${badingImage(b, 'full')}</button>` : ''}
       <span class="t-meta">${date}</span>
-      <div style="display:flex;gap:24px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)" data-counts></div>
+      <div class="bub-counts" data-counts></div>
       <div data-actions></div>
     </section>
     <div class="tabs" role="tablist"><button role="tab" data-tab="comments"></button><button role="tab" data-tab="rebades"></button><span class="ink"></span></div>

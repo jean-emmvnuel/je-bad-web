@@ -26,6 +26,10 @@ export function composeView(root, { go, back }) {
       <div style="flex:1;display:flex;flex-direction:column;gap:6px">
         <b data-who></b>
         <textarea class="plain" rows="6" maxlength="1200" placeholder="Qu'est-ce qui t'est arrivé ?" aria-label="Ton bading">${esc(draft.text)}</textarea>
+        <div class="char-meter" data-meter aria-live="polite">
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><circle cx="12" cy="12" r="10" class="cm-track"/><circle cx="12" cy="12" r="10" class="cm-fill" pathLength="100" data-ring/></svg>
+          <span data-count></span>
+        </div>
         <div data-media></div>
         <div data-suggest></div>
         <p class="error" data-err hidden></p>
@@ -41,7 +45,7 @@ export function composeView(root, { go, back }) {
         <span style="flex:1"><b class="t-label">Publier en anonyme</b><br/><span class="t-small" style="color:var(--text-3)">Ne pourra plus être changé après publication</span></span>
         <button class="toggle" role="switch" aria-checked="${anonymous}" aria-label="Publier en anonyme" data-anon><i></i></button>
       </div>
-      <div style="display:flex;justify-content:space-between" class="t-small"><span data-left style="color:var(--text-3)"></span><span data-count style="font-variant-numeric:tabular-nums;color:var(--text-3)"></span></div>
+      <div class="t-small"><span data-left style="color:var(--text-3)"></span></div>
     </div>
     </div>`;
 
@@ -57,7 +61,11 @@ export function composeView(root, { go, back }) {
     const len = ta.value.trim().length, tooLong = len > max;
     pub.disabled = image ? tooLong : len < S.RULES.minLength || tooLong;
     ta.placeholder = image ? 'Ajoute une légende (facultatif)…' : "Qu'est-ce qui t'est arrivé ?";
-    const c = $('[data-count]', root); c.textContent = `${len} / ${max}`; c.style.color = tooLong ? 'var(--danger)' : len > max * 0.9 ? 'var(--brand-ink)' : 'var(--text-3)';
+    // Compteur toujours visible sous le texte : anneau qui se remplit + caractères restants.
+    const meter = $('[data-meter]', root), rest = max - len;
+    meter.dataset.state = tooLong ? 'over' : rest <= Math.max(20, max * 0.1) ? 'near' : 'ok';
+    $('[data-ring]', root).style.strokeDasharray = `${Math.min(100, (len / max) * 100)} 100`;
+    $('[data-count]', root).innerHTML = tooLong ? `<b>${-rest}</b> en trop` : `<b>${len}</b> / ${max}${image ? ' · légende' : ''}`;
     const left = S.RULES.dailyLimit - S.get().postedToday;
     $('[data-left]', root).textContent = left <= 5 ? `Encore ${Math.max(0, left)} bading${left > 1 ? 's' : ''} aujourd'hui` : 'Tape @ pour mentionner quelqu’un';
     // Suggestions @mention pour le mot sous le curseur

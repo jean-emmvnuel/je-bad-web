@@ -436,3 +436,57 @@ button.c-sticker:hover .stk { transform: rotate(var(--rot, 0deg)) scale(1.04); }
 .sp-create { width: 92px; height: 92px; margin: 0 auto; border-radius: 18px; border: 2px dashed var(--brand-ink); color: var(--brand-ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-weight: 600; font-size: 13px; cursor: pointer; }
 .sp-create:hover { background: var(--brand-soft); }
 .sp-empty { grid-column: 1 / -1; padding: 4px 8px; }
+
+/* Compteur de caractères (création d'un bading) */
+.char-meter { display:flex; align-items:center; justify-content:flex-end; gap:8px; font-size:13px; color:var(--text-3); font-variant-numeric:tabular-nums; }
+.char-meter b { color:var(--text-2); font-weight:700; }
+.char-meter svg { transform:rotate(-90deg); flex:none; }
+.char-meter .cm-track { fill:none; stroke:var(--line); stroke-width:3; }
+.char-meter .cm-fill { fill:none; stroke:var(--brand); stroke-width:3; stroke-linecap:round; stroke-dasharray:0 100; transition:stroke-dasharray .2s ease, stroke .2s; }
+.char-meter[data-state=near] .cm-fill { stroke:#ffb547; }
+.char-meter[data-state=near] b { color:#ffb547; }
+.char-meter[data-state=over] .cm-fill { stroke:var(--danger); }
+.char-meter[data-state=over], .char-meter[data-state=over] b { color:var(--danger); }
+
+/* ───────────── Cartes « bulle » : l'identité On Bade du fil ─────────────
+   Un bading = une bulle de récit arrondie, teintée violet, avec une petite queue
+   de bulle sous l'auteur. Le texte prend toute la largeur ; « Rire » est un vrai bouton. */
+.card-row.bub { display: flex; flex-direction: column; gap: 10px; position: relative; margin: 0 12px 18px; padding: 14px 16px 10px; border: 1px solid rgba(183, 107, 255, 0.14); border-radius: var(--r-xl); background: linear-gradient(165deg, rgba(152, 16, 230, 0.13), rgba(152, 16, 230, 0.03) 55%), var(--surface); }
+.card-row.bub::after { content: ''; position: absolute; left: 30px; bottom: -9px; width: 18px; height: 18px; background: var(--surface); border-right: 1px solid rgba(183, 107, 255, 0.14); border-bottom: 1px solid rgba(183, 107, 255, 0.14); border-bottom-right-radius: 5px; transform: rotate(45deg); }
+.card-row.bub.anon { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.018) 0 12px, transparent 12px 24px), var(--surface); border-color: var(--line); }
+.card-row.bub.anon::after { border-color: var(--line); }
+.card-row.bub:hover { background: linear-gradient(165deg, rgba(152, 16, 230, 0.18), rgba(152, 16, 230, 0.05) 55%), var(--surface); }
+.card-row.bub.anon:hover { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0 12px, transparent 12px 24px), var(--surface); }
+.bub-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.bub-who { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+.bub-who .name { font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bub-who .t-meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-row.bub .t-story { font-size: 18px; }
+.card-row.bub .rebaded { margin: 0; }
+.card-row.bub .b-img { margin-top: 2px; }
+.card-row.bub .quote { background: rgba(26, 25, 25, 0.6); }
+.card-row.bub .actions { margin: 2px -6px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 8px; }
+/* Bouton « Rire » : pastille pleine, le cœur de l'app */
+.act.laugh { background: var(--brand-soft); color: var(--brand-ink); font-weight: 700; padding: 0 14px 0 10px; margin-right: 6px; }
+.act.laugh .laugh-l { font-weight: 600; }
+.act.laugh [data-n] { opacity: 0.85; }
+.act.laugh:hover { background: rgba(152, 16, 230, 0.28); }
+.act.laugh.on { background: var(--brand); color: #fff; }
+.act.laugh.on svg { fill: rgba(255, 255, 255, 0.2); }
+@media (max-width: 380px) { .act.laugh .laugh-l { display: none; } }
+@media (min-width: 900px) {
+  .main .card-row.bub { margin: 0 0 22px; padding: 18px 22px 12px; border-radius: var(--r-xl); border: 1px solid rgba(183, 107, 255, 0.14); }
+  .main .card-row.bub.anon { border-color: var(--line); }
+  .main .card-row.bub:hover { border-color: rgba(183, 107, 255, 0.3); }
+}
+
+/* Bading ouvert : la même bulle, en grand */
+.bub-hero { position: relative; display: flex; flex-direction: column; gap: 14px; margin: 12px 12px 22px; padding: 18px 18px 10px; border: 1px solid rgba(183, 107, 255, 0.16); border-radius: var(--r-xl); background: linear-gradient(165deg, rgba(152, 16, 230, 0.16), rgba(152, 16, 230, 0.03) 60%), var(--surface); }
+.bub-hero::after { content: ''; position: absolute; left: 34px; bottom: -10px; width: 20px; height: 20px; background: var(--surface); border-right: 1px solid rgba(183, 107, 255, 0.16); border-bottom: 1px solid rgba(183, 107, 255, 0.16); border-bottom-right-radius: 5px; transform: rotate(45deg); }
+.bub-hero.anon { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.018) 0 12px, transparent 12px 24px), var(--surface); border-color: var(--line); }
+.bub-hero.anon::after { border-color: var(--line); }
+.bub-hero .t-story { font-size: 20px !important; }
+.bub-counts { display: flex; gap: 20px; flex-wrap: wrap; padding: 10px 0 0; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.bub-hero .actions { margin: 0 -6px; }
+@media (min-width: 900px) { .main .bub-hero { margin: 0 0 24px; padding: 22px 24px 12px; } }
+.act { white-space: nowrap; }

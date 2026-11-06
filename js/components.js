@@ -26,7 +26,7 @@ export function quoted(id) {
 }
 export const actionsRow = (t) => `
   <div class="actions" data-id="${t.id}">
-    <button class="act ${t.likedByMe ? 'on' : ''}" data-a="laugh" aria-pressed="${t.likedByMe}" aria-label="Rire, ${t.likes} rires"><span class="confetti-host"></span>${icon('laugh')}<span data-n>${S.compact(t.likes)}</span></button>
+    <button class="act laugh ${t.likedByMe ? 'on' : ''}" data-a="laugh" aria-pressed="${t.likedByMe}" aria-label="Rire, ${t.likes} rires"><span class="confetti-host"></span>${icon('laugh')}<span class="laugh-l">Rire</span><span data-n>${S.compact(t.likes)}</span></button>
     <button class="act" data-a="comment" aria-label="Commenter">${icon('message')}<span>${S.compact(S.commentCount(t.id))}</span></button>
     <button class="act" data-a="rebade" aria-label="Rebader">${icon('repeat')}<span>${S.compact(t.rebades)}</span></button>
     <button class="act" data-a="share" aria-label="Partager">${icon('share')}</button>
@@ -41,14 +41,17 @@ export function card(b) {
   const { user } = S.displayName(b);
   const mine = b.authorId === S.ME;
   const who = b.anonymous ? 'Un Badeur anonyme' : mine ? 'Tu' : `@${user?.pseudo}`;
-  return `<article class="card-row" data-card="${t.id}" data-go="/bading/${t.id}" tabindex="0">
-    ${avatar(t.anonymous ? null : S.user(t.authorId) ?? null, 44)}
-    <div class="body">
-      ${plain ? `<div class="rebaded" style="margin-left:0">${icon('repeat')} ${esc(who)} ${mine ? 'as rebadé' : 'a rebadé'}</div>` : ''}
-      <div style="display:flex;align-items:center;gap:8px">${author(t)}<span class="spacer"></span><button class="icon-btn" style="width:34px;height:34px" data-a="more" data-id="${t.id}" aria-label="Plus d'options">${icon('ellipsis')}</button></div>
-      ${plain ? (origin && !origin.deleted ? `${origin.text ? `<p class="t-story">${rich(origin.text)}</p>` : ''}${badingImage(origin)}` : quoted(b.rebadeOf)) : `${b.text ? `<p class="t-story">${rich(b.text)}</p>` : ''}${badingImage(b)}${isRebade ? quoted(b.rebadeOf) : ''}`}
-      ${actionsRow(t)}
-    </div>
+  const n = S.displayName(t), u = t.anonymous ? null : S.user(t.authorId) ?? null;
+  // Carte « bulle » : un récit dans une bulle arrondie, l'auteur en tête, le texte sur toute la largeur.
+  return `<article class="card-row bub ${t.anonymous ? 'anon' : ''}" data-card="${t.id}" data-go="/bading/${t.id}" tabindex="0">
+    ${plain ? `<div class="rebaded">${icon('repeat')} ${esc(who)} ${mine ? 'as rebadé' : 'a rebadé'}</div>` : ''}
+    <header class="bub-head">
+      ${avatar(u, 40)}
+      <div class="bub-who"><span class="name" style="${t.anonymous ? 'color:var(--text-2)' : ''}">${esc(n.name)}${u?.verified && !t.anonymous ? verified() : ''}</span><span class="t-meta">${n.handle && !t.anonymous ? `${esc(n.handle)} · ` : ''}${S.timeAgo(t.createdAt)}</span></div>
+      <button class="icon-btn" style="width:36px;height:36px" data-a="more" data-id="${t.id}" aria-label="Plus d'options">${icon('ellipsis')}</button>
+    </header>
+    ${plain ? (origin && !origin.deleted ? `${origin.text ? `<p class="t-story">${rich(origin.text)}</p>` : ''}${badingImage(origin)}` : quoted(b.rebadeOf)) : `${b.text ? `<p class="t-story">${rich(b.text)}</p>` : ''}${badingImage(b)}${isRebade ? quoted(b.rebadeOf) : ''}`}
+    ${actionsRow(t)}
   </article>`;
 }
 
