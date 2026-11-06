@@ -38,6 +38,9 @@ function seed() {
     C({ id: 'c5', badingId: 'b2', authorId: 'u3', text: 'Papa a vu, papa a compris, papa a validé.', createdAt: now - 30 * min, likes: 64 }),
     C({ id: 'c6', badingId: 'b2', authorId: 'u6', text: 'On veut la suite de cette histoire', createdAt: now - 20 * min, parentId: 'c5', replyTo: 'LeVraiZoba', likes: 3 }),
     C({ id: 'c7', badingId: 'm1', authorId: 'u3', text: 'Le docteur était bon ou pas finalement ? 😭', createdAt: now - 2 * h, likes: 11 }),
+    C({ id: 'c8', badingId: 'b4', authorId: 'u6', text: '', sticker: 'ehhh', createdAt: now - 55 * min, likes: 23 }),
+    C({ id: 'c9', badingId: 'b4', authorId: 'u4', text: '', sticker: 'mort', createdAt: now - 50 * min, parentId: 'c1', replyTo: 'AwaLaGo', likes: 6 }),
+    C({ id: 'c10', badingId: 'b2', authorId: 'u1', text: '', sticker: 'gate', createdAt: now - 25 * min, likes: 14 }),
   ];
   const notifications = [
     { id: 'n1', kind: 'like', actorId: 'u1', others: 12, badingId: 'm1', createdAt: now - 8 * min, read: false },
@@ -51,8 +54,8 @@ function seed() {
     B({ id: 'n-3', authorId: 'u3', anonymous: false, text: "Ma tante a envoyé un vocal de 7 minutes pour dire « ok ». Les 6 premières minutes c'était le bruit du marché.", likes: 21, rebades: 2, shares: 3 }),
   ];
   return {
-    v: 1, onboarded: false, session: null, users, badings, comments, notifications, incoming,
-    draft: { text: '', anonymous: false }, mentionPolicy: 'everyone', favorites: [], blocked: [], postedToday: 0,
+    v: 2, onboarded: false, session: null, users, badings, comments, notifications, incoming,
+    draft: { text: '', anonymous: false, image: null }, recentStickers: [], mentionPolicy: 'everyone', favorites: [], blocked: [], postedToday: 0,
     badge: { status: 'refused', reason: 'il faut au moins 10 badings publiés', decidedAt: now - 3 * d },
     deletion: { status: 'none' }, pendingLink: null, notifEnabled: false, accounts: {}, pendingSignup: null,
   };
@@ -61,7 +64,9 @@ function seed() {
 const KEY = 'jebade-web-v1';
 let state;
 try { state = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch { state = seed(); }
-if (state.v !== 1) state = seed();
+// Migration v1 → v2 (images et stickers) sans perdre la session ni les badings de la démo.
+if (state.v === 1) { state.v = 2; state.recentStickers = []; state.draft = { ...state.draft, image: null }; state.comments.push(...seed().comments.filter((c) => c.sticker)); }
+if (state.v !== 2) state = seed();
 
 const listeners = new Set();
 let saveTimer;
@@ -97,9 +102,10 @@ export function threads(badingId) {
 export const searchPseudos = (q) => Object.values(state.users).filter((u) => u.id !== ME && !state.blocked.includes(u.id) && u.pseudo.toLowerCase().startsWith(q.toLowerCase())).slice(0, 5);
 export const countMentions = (t) => (t.match(/@[\w.]+/g) ?? []).length;
 
-export function validate(text) {
+/** F1 RG1 : le texte est obligatoire (10 caractères min.) seulement s'il n'y a pas d'image. */
+export function validate(text, hasImage = false) {
   const t = text.trim();
-  if (t.length < RULES.minLength) return 'too_short';
+  if (!hasImage && t.length < RULES.minLength) return 'too_short';
   if (t.length > RULES.maxLength) return 'too_long';
   if (countMentions(t) > RULES.maxMentions) return 'too_many_mentions';
   if (state.postedToday >= RULES.dailyLimit) return 'daily_limit';
@@ -150,11 +156,12 @@ export function toggleLike(id) {
   b.likes += b.likedByMe ? -1 : 1; b.likedByMe = !b.likedByMe; commit();
 }
 export function share(id) { const b = bading(id); if (b) { b.shares += 1; commit(); } }
-export function publish(text, anonymous) {
-  const err = validate(text); if (err) return { ok: false, error: err };
+/** `image` = { src (JPEG recadré, data URL), ratio } ou null. En prod : upload puis URL du CDN. */
+export function publish(text, anonymous, image = null) {
+  const err = validate(text, !!image); if (err) return { ok: false, error: err };
   const id = `m${Date.now()}`;
-  state.badings.unshift({ id, authorId: ME, anonymous, text: text.trim(), createdAt: Date.now(), likes: 0, likedByMe: false, rebades: 0, shares: 0 });
-  state.postedToday += 1; state.draft = { text: '', anonymous: false }; commit();
+  state.badings.unshift({ id, authorId: ME, anonymous, text: text.trim(), ...(image ? { image: { src: image.src, ratio: image.ratio } } : {}), createdAt: Date.now(), likes: 0, likedByMe: false, rebades: 0, shares: 0 });
+  state.postedToday += 1; state.draft = { text: '', anonymous: false, image: null }; commit();
   return { ok: true, id };
 }
 export function rebade(id, opinion, anonymous) {
@@ -177,9 +184,12 @@ export function setAvatar(a) { state.users[ME].avatar = a; syncMe(); commit(); }
 export function requestBadge(links) { state.badge = { status: 'pending', links }; commit(); }
 export function requestDeletion(reason) { state.deletion = { status: 'pending', requestedAt: Date.now(), reason }; commit(); }
 export function cancelDeletion() { state.deletion = { status: 'none' }; commit(); }
-export function addComment(badingId, text, parent) {
-  const t = text.trim(); if (!t || t.length > RULES.commentMax) return null;
-  const c = { id: `c${Date.now()}`, badingId, authorId: ME, text: t, createdAt: Date.now(), parentId: parent ? parent.parentId ?? parent.id : null, replyTo: parent ? state.users[parent.authorId]?.pseudo : undefined, likes: 0, likedByMe: false };
+/** F8 : un commentaire est un texte (1 à 500 caractères) OU un sticker seul. */
+export function addComment(badingId, text, parent, stickerId = null) {
+  const t = stickerId ? '' : text.trim(); if (!stickerId && (!t || t.length > RULES.commentMax)) return null;
+  if (!stickerId && BANNED.some((w) => t.toLowerCase().includes(w))) return null;
+  if (stickerId) state.recentStickers = [stickerId, ...(state.recentStickers || []).filter((x) => x !== stickerId)].slice(0, 12);
+  const c = { id: `c${Date.now()}`, badingId, authorId: ME, text: t, ...(stickerId ? { sticker: stickerId } : {}), createdAt: Date.now(), parentId: parent ? parent.parentId ?? parent.id : null, replyTo: parent ? state.users[parent.authorId]?.pseudo : undefined, likes: 0, likedByMe: false };
   state.comments.push(c); commit(); return c;
 }
 export function removeComment(id) { state.comments.forEach((c) => { if (c.id === id || c.parentId === id) c.deleted = true; }); commit(); }

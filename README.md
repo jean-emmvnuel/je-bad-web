@@ -32,7 +32,8 @@ Ce dépôt est la **version web** de l'app mobile ([jean-emmvnuel/jebade](https:
 | 🔐 | **Inscription** e-mail + mot de passe (afficher/masquer, confirmation), pseudo + charte du Badeur ; **connexion** et mot de passe oublié |
 | 📰 | **Fil** façon X : en-tête qui se replie, entrée des cartes en cascade, **pull-to-refresh** où le b rit pendant le chargement |
 | 😂 | **Rire** avec explosion de **confettis** (physique GSAP) |
-| 💬 | **Commentaires et réponses** avec **traits de fil**, repli des réponses, suppression avec confirmation |
+| 🖼️ | **Bading en image** : texte, image ou les deux ; **recadrage avant publication** (libre, 1:1, 4:5, 16:9), zoom, rotation, déplacement ; JPEG 1 080 px max, métadonnées supprimées |
+| 💬 | **Commentaires et réponses** en texte ou en **sticker** (16 stickers On Bade : réactions et nouchi, onglet Récents), traits de fil, repli des réponses, suppression avec confirmation |
 | 🔁 | **Rebade** direct ou avec avis · 📤 **Partage** WhatsApp, Facebook, lien dynamique, **image PNG générée** (canvas) |
 | 🔖 | **Favoris**, 🎭 **mode anonyme**, @mentions avec suggestions, brouillon gardé |
 | 👤 | **Profil** : statistiques qui défilent, onglets Badings / Favoris / Anonymes, **20 avatars « Badeur »** au hasard |
@@ -61,6 +62,8 @@ Les données sont simulées et gardées dans le navigateur (`localStorage`), com
 index.html            ← coquille, splash, chargement de GSAP
 css/style.css         ← tokens (identiques au mobile), mise en page, composants
 js/app.js             ← routeur (hash), coquille web responsive, splash GSAP
+js/cropper.js         ← écran de recadrage d'image (F1)
+js/stickers.js        ← bibliothèque de stickers (F8)
 js/pwa.js             ← service worker, installation, liens dynamiques, partage vers l'app
 sw.js                 ← service worker (cache hors ligne, notifications)
 manifest.webmanifest  ← manifeste de la PWA

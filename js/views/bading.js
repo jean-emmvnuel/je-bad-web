@@ -1,6 +1,7 @@
 import * as S from '../store.js';
 import { $, avatar, closeSheet, esc, icon, reduceMotion, rich, sheet, sheetItem, toast, verified } from '../ui.js';
-import { actionsRow, card, confirmSheet, wireActions } from '../components.js';
+import { actionsRow, badingImage, card, confirmSheet, wireActions } from '../components.js';
+import { STICKERS, THEMES, stickerHtml } from '../stickers.js';
 import { simulateReply } from '../notify.js';
 
 export function badingView(root, { params, query, go, back }) {
@@ -24,7 +25,8 @@ export function badingView(root, { params, query, go, back }) {
   root.innerHTML = `${header}
     <section style="padding:16px;display:flex;flex-direction:column;gap:16px" data-hero>
       <div style="display:flex;align-items:center;gap:12px">${avatar(b.anonymous ? null : user, 48)}<div><div style="display:flex;align-items:center;gap:6px"><b style="${b.anonymous ? 'color:var(--text-2)' : ''}">${esc(name)}</b>${user?.verified && !b.anonymous ? verified() : ''}</div>${handle ? `<span class="t-meta">${esc(handle)}</span>` : ''}</div></div>
-      <p class="t-story" style="font-size:19px">${rich(b.text)}</p>
+      ${b.text ? `<p class="t-story" style="font-size:19px">${rich(b.text)}</p>` : ''}
+      ${b.image ? `<button class="zoom-img" data-zoom-img aria-label="Agrandir l'image">${badingImage(b, 'full')}</button>` : ''}
       <span class="t-meta">${date}</span>
       <div style="display:flex;gap:24px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)" data-counts></div>
       <div data-actions></div>
@@ -33,7 +35,11 @@ export function badingView(root, { params, query, go, back }) {
     <div data-panel></div>
     <div class="composer" data-composer>
       <div data-reply hidden style="display:flex;align-items:center;gap:6px;padding:0 4px"><span class="t-small muted" style="flex:1" data-reply-label></span><button class="icon-btn" style="width:28px;height:28px" data-cancel-reply aria-label="Annuler la réponse">${icon('x')}</button></div>
-      <div class="row">${avatar(S.me(), 32)}<textarea rows="1" maxlength="600" placeholder="Ajoute un commentaire…" aria-label="Ton commentaire"></textarea><button class="btn btn-primary btn-sm" data-send disabled>Publier</button></div>
+      <div class="sticker-picker" data-picker hidden>
+        <div class="sp-tabs" role="tablist">${THEMES.map(([k, l]) => `<button role="tab" data-st-tab="${k}">${l}</button>`).join('')}</div>
+        <div class="sp-grid" data-st-grid></div>
+      </div>
+      <div class="row">${avatar(S.me(), 32)}<textarea rows="1" maxlength="600" placeholder="Ton commentaire…" aria-label="Ton commentaire"></textarea><button class="icon-btn sticker-btn" data-st-open aria-label="Envoyer un sticker" aria-expanded="false">${icon('sticker')}</button><button class="btn btn-primary btn-sm" data-send disabled>Publier</button></div>
       <p class="error" data-cerr hidden></p>
     </div>`;
 
@@ -59,7 +65,7 @@ export function badingView(root, { params, query, go, back }) {
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
         <div style="display:flex;align-items:center;gap:6px"><b style="font-size:14px">${esc(u?.pseudo ?? 'Badeur')}</b>${u?.verified ? verified() : ''}<span class="t-small" style="color:var(--text-3)">· ${S.timeAgo(c.createdAt)}</span></div>
         ${c.replyTo ? `<span class="t-small" style="color:var(--text-3)">en réponse à <span class="mention">@${esc(c.replyTo)}</span></span>` : ''}
-        <p style="overflow-wrap:anywhere">${rich(c.text)}</p>
+        ${c.sticker ? `<div class="c-sticker">${stickerHtml(c.sticker, reply ? 104 : 120)}</div>` : `<p style="overflow-wrap:anywhere">${rich(c.text)}</p>`}
         <div class="c-actions">
           <button data-c-a="like" class="${c.likedByMe ? 'on' : ''}" aria-label="${c.likedByMe ? 'Retirer mon rire' : 'Rire à ce commentaire'}">${icon('laugh')}${c.likes ? c.likes : ''}</button>
           <button data-c-a="reply">Répondre</button>
@@ -122,7 +128,7 @@ export function badingView(root, { params, query, go, back }) {
 
   // ─── Saisie ───────────────────────────────────────────
   const ta = $('[data-composer] textarea', root), send = $('[data-send]', root), cerr = $('[data-cerr]', root);
-  const cancelReply = () => { parent = null; $('[data-reply]', root).hidden = true; ta.placeholder = 'Ajoute un commentaire…'; };
+  const cancelReply = () => { parent = null; $('[data-reply]', root).hidden = true; ta.placeholder = "Ton commentaire…"; };
   $('[data-cancel-reply]', root).onclick = cancelReply;
   ta.oninput = () => {
     ta.style.height = 'auto'; ta.style.height = `${Math.min(120, ta.scrollHeight)}px`;
@@ -130,13 +136,43 @@ export function badingView(root, { params, query, go, back }) {
     send.disabled = !ta.value.trim() || over; cerr.hidden = !over; cerr.textContent = `${S.RULES.commentMax} caractères maximum (${n}).`;
   };
   ta.onkeydown = (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) send.click(); };
-  send.onclick = () => {
-    const c = S.addComment(id, ta.value, parent ?? undefined); if (!c) return;
-    ta.value = ''; ta.oninput(); cancelReply(); tab = 'comments'; moveInk(); panel();
+  // ─── Stickers (F8) : un toucher = envoi direct ───
+  const picker = $('[data-picker]', root), stBtn = $('[data-st-open]', root);
+  let stTab = (S.get().recentStickers || []).length ? 'recent' : 'reactions';
+  const drawStickers = () => {
+    const ids = stTab === 'recent' ? S.get().recentStickers || [] : STICKERS.filter((x) => x.theme === stTab).map((x) => x.id);
+    root.querySelectorAll('[data-st-tab]').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.stTab === stTab)));
+    $('[data-st-grid]', root).innerHTML = ids.length ? ids.map((sid) => `<button class="sp-item" data-st="${sid}">${stickerHtml(sid, 92)}</button>`).join('') : '<p class="t-small muted" style="padding:12px">Tes stickers récents apparaîtront ici.</p>';
+  };
+  const togglePicker = (show = picker.hidden) => {
+    picker.hidden = !show; stBtn.setAttribute('aria-expanded', String(show)); stBtn.classList.toggle('on', show);
+    if (show) { drawStickers(); if (!reduceMotion()) gsap.from(picker, { y: 12, opacity: 0, duration: 0.25, ease: 'expo.out' }); }
+  };
+  stBtn.onclick = () => togglePicker();
+  root.querySelectorAll('[data-st-tab]').forEach((t) => (t.onclick = () => { stTab = t.dataset.stTab; drawStickers(); }));
+  $('[data-st-grid]', root).onclick = (e) => {
+    const sid = e.target.closest('[data-st]')?.dataset.st; if (!sid) return;
+    togglePicker(false); posted(S.addComment(id, '', parent ?? undefined, sid));
+  };
+  const posted = (c) => {
+    if (!c) return;
+    cancelReply(); tab = 'comments'; moveInk(); panel();
     const el = root.querySelector(`[data-c="${c.id}"]`);
-    if (el) { el.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'center' }); gsap.from(el, { backgroundColor: 'rgba(152,16,230,.25)', duration: 1.2 }); }
+    if (el) { el.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'center' }); gsap.from(el, { backgroundColor: 'rgba(152,16,230,.25)', duration: 1.2 }); const st = el.querySelector('.stk'); if (st && !reduceMotion()) gsap.from(st, { scale: 0.4, rotation: -20, duration: 0.6, ease: 'back.out(2.2)' }); }
     simulateReply(c);
   };
+  send.onclick = () => {
+    const c = S.addComment(id, ta.value, parent ?? undefined); if (!c) { cerr.textContent = 'Ce commentaire contient un mot refusé par la charte.'; cerr.hidden = false; return; }
+    ta.value = ''; ta.oninput(); posted(c);
+  };
+  $('[data-zoom-img]', root)?.addEventListener('click', () => {
+    const lb = document.createElement('div'); lb.className = 'lightbox'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-label', 'Image en grand');
+    lb.innerHTML = `<img src="${b.image.src}" alt="Image du bading"/><button class="icon-btn" aria-label="Fermer">${icon('x')}</button>`;
+    const close = () => { removeEventListener('keydown', onKey); lb.remove(); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    lb.onclick = close; addEventListener('keydown', onKey); document.body.appendChild(lb);
+    if (!reduceMotion()) gsap.from(lb.querySelector('img'), { scale: 0.92, opacity: 0, duration: 0.3, ease: 'expo.out' });
+  });
   if (query.focus === 'comment') setTimeout(() => ta.focus(), 300);
 
   if (!reduceMotion()) gsap.from('[data-hero] > *', { y: 12, opacity: 0, duration: 0.4, stagger: 0.04, ease: 'expo.out' });

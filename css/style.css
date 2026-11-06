@@ -22,6 +22,7 @@
   --col: 600px;
 }
 
+[hidden] { display: none !important; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 16px; line-height: 1.4; -webkit-font-smoothing: antialiased; }
 body { min-height: 100dvh; overflow-x: hidden; }
@@ -361,3 +362,63 @@ button.srow:hover { background: var(--surface-2); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ───────────── Images des badings (F1) ───────────── */
+.b-img { position: relative; margin: 10px 0 4px; border-radius: var(--r-lg); overflow: hidden; background: var(--surface-2); border: 1px solid var(--line); aspect-ratio: var(--ratio); max-height: 520px; }
+.b-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.b-img.small { max-height: 220px; margin-top: 8px; }
+.b-img.full { max-height: none; margin: 0; }
+.zoom-img { display: block; width: 100%; padding: 0; text-align: left; cursor: zoom-in; border-radius: var(--r-lg); }
+.lightbox { position: fixed; inset: 0; z-index: 120; background: rgba(10, 9, 9, 0.94); display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
+.lightbox img { max-width: 100%; max-height: 100%; border-radius: var(--r-md); }
+.lightbox .icon-btn { position: absolute; top: 16px; right: 16px; background: var(--surface-2); color: var(--text); }
+
+.compose-tools { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-top: 1px solid var(--line); }
+.tool-btn { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: var(--r-pill); background: var(--surface-2); color: var(--brand-ink); font-weight: 600; cursor: pointer; }
+.tool-btn:hover { background: var(--line); }
+.compose-img { position: relative; margin: 6px 0; border-radius: var(--r-lg); overflow: hidden; aspect-ratio: var(--ratio); max-height: 420px; background: var(--surface-2); }
+.compose-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.compose-img-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; }
+.chip-btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: var(--r-pill); background: rgba(26, 25, 25, 0.82); color: #fff; font-weight: 600; font-size: 14px; backdrop-filter: blur(8px); }
+.chip-btn:hover { background: rgba(26, 25, 25, 0.95); }
+
+/* ───────────── Recadrage ───────────── */
+.cropper { position: fixed; inset: 0; z-index: 130; background: #0d0c0c; display: flex; flex-direction: column; color: var(--text); }
+.cropper-bar { display: flex; align-items: center; gap: 12px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); }
+.cropper-bar h2 { flex: 1; text-align: center; }
+.cropper-stage { position: relative; flex: 1; overflow: hidden; touch-action: none; cursor: grab; user-select: none; }
+.cropper-stage:active { cursor: grabbing; }
+.cropper-stage img { position: absolute; max-width: none; pointer-events: none; transform-origin: center; }
+.cropper-frame { position: absolute; border: 2px solid #fff; box-shadow: 0 0 0 9999px rgba(13, 12, 12, 0.66); pointer-events: none; }
+.cropper-frame .g { position: absolute; background: rgba(255, 255, 255, 0.35); }
+.cropper-frame .g1, .cropper-frame .g2 { top: 0; bottom: 0; width: 1px; } .cropper-frame .g1 { left: 33.33%; } .cropper-frame .g2 { left: 66.66%; }
+.cropper-frame .g3, .cropper-frame .g4 { left: 0; right: 0; height: 1px; } .cropper-frame .g3 { top: 33.33%; } .cropper-frame .g4 { top: 66.66%; }
+.cropper-frame .h { position: absolute; width: 28px; height: 28px; pointer-events: auto; border-color: #fff; border-style: solid; border-width: 0; }
+.cropper-frame .h-nw { left: -4px; top: -4px; border-left-width: 5px; border-top-width: 5px; cursor: nwse-resize; }
+.cropper-frame .h-ne { right: -4px; top: -4px; border-right-width: 5px; border-top-width: 5px; cursor: nesw-resize; }
+.cropper-frame .h-sw { left: -4px; bottom: -4px; border-left-width: 5px; border-bottom-width: 5px; cursor: nesw-resize; }
+.cropper-frame .h-se { right: -4px; bottom: -4px; border-right-width: 5px; border-bottom-width: 5px; cursor: nwse-resize; }
+.cropper-tools { padding: 12px 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; max-width: 560px; width: 100%; margin: 0 auto; }
+.cropper-tools .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.cropper-tools .seg button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: var(--r-md); background: var(--surface); color: var(--text-2); font-size: 12px; }
+.cropper-tools .seg button b { font-size: 15px; color: var(--text); }
+.cropper-tools .seg button[aria-checked="true"] { background: var(--brand-soft); color: var(--brand-ink); box-shadow: inset 0 0 0 1.5px var(--brand-ink); }
+.cropper-row { display: flex; align-items: center; gap: 12px; }
+.cropper-row input[type=range] { flex: 1; accent-color: var(--brand); }
+.cropper-row .icon-btn { background: var(--surface); }
+
+/* ───────────── Stickers (F8) ───────────── */
+.stk { --w: 120px; width: var(--w); min-height: calc(var(--w) * 0.78); display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--w) * 0.03); padding: calc(var(--w) * 0.08); border-radius: calc(var(--w) * 0.2); background: var(--sbg); color: var(--sfg); box-shadow: 0 0 0 calc(var(--w) * 0.035) #fff, 0 6px 18px rgba(0, 0, 0, 0.35); transform: rotate(var(--rot)); text-align: center; line-height: 1; }
+.stk-e { font-size: calc(var(--w) * 0.36); line-height: 1; }
+.stk-t { font-family: var(--font-display); font-weight: 800; font-size: calc(var(--w) * 0.14); letter-spacing: -0.01em; line-height: 1.05; }
+.c-sticker { padding: 10px 6px 6px; }
+.sticker-btn { color: var(--text-2); }
+.sticker-btn.on, .sticker-btn:hover { color: var(--brand-ink); background: var(--brand-soft); }
+.sticker-picker { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+.sp-tabs { display: flex; gap: 4px; padding: 6px; border-bottom: 1px solid var(--line); }
+.sp-tabs button { height: 32px; padding: 0 12px; border-radius: var(--r-pill); font-size: 13px; font-weight: 600; color: var(--text-2); }
+.sp-tabs button[aria-selected="true"] { background: var(--surface-2); color: var(--text); }
+.sp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 14px; padding: 16px 12px; max-height: 260px; overflow-y: auto; }
+.sp-item { display: grid; place-items: center; padding: 6px 0; border-radius: var(--r-md); transition: transform 0.15s; }
+.sp-item:hover { transform: scale(1.06); }
+.sp-item:active { transform: scale(0.94); }

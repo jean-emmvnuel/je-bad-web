@@ -44,8 +44,11 @@ export function simulateReply(c) {
   setTimeout(() => {
     const st = S.get();
     if (st.comments.find((x) => x.id === c.id)?.deleted) return;
-    st.comments.push({ id: `c${Date.now()}`, badingId: c.badingId, authorId: 'u2', text: 'Ahh toi aussi 😂 tu m’as tuée', createdAt: Date.now(), parentId: c.parentId ?? c.id, replyTo: st.users[c.authorId]?.pseudo, likes: 0, likedByMe: false });
+    // Un sticker appelle souvent un sticker : la réponse simulée alterne texte et sticker.
+    const withSticker = !!c.sticker || Math.random() < 0.3;
+    const text = withSticker ? '' : 'Ahh toi aussi 😂 tu m’as tuée';
+    st.comments.push({ id: `c${Date.now()}`, badingId: c.badingId, authorId: 'u2', text, ...(withSticker ? { sticker: c.sticker === 'mort' ? 'pardon' : 'mort' } : {}), createdAt: Date.now(), parentId: c.parentId ?? c.id, replyTo: st.users[c.authorId]?.pseudo, likes: 0, likedByMe: false });
     S.pushNotification({ kind: 'reply', actorId: 'u2', badingId: c.badingId });
-    notify('AwaLaGo t’a répondu', 'Ahh toi aussi 😂 tu m’as tuée', `/bading/${c.badingId}`);
+    notify('AwaLaGo t’a répondu', withSticker ? 'avec un sticker 😂' : text, `/bading/${c.badingId}`);
   }, 7000);
 }

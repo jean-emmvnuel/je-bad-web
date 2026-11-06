@@ -9,8 +9,10 @@ const PUBLIC_HOST = 'https://jebade.app';
  * (Android, ordinateur) et sinon sur le site, directement sur le bading. En prod → jebade.app/b/<id>.
  */
 export const badingLink = (id) => (location.hostname.endsWith('jebade.app') ? `${PUBLIC_HOST}/b/${id}` : badingUrl(id));
+/** Image d'un bading, au ratio choisi au recadrage (hauteur limitée dans le fil). */
+export const badingImage = (b, cls = '') => (b?.image ? `<figure class="b-img ${cls}" style="--ratio:${b.image.ratio}"><img src="${b.image.src}" alt="Image du bading" loading="lazy" decoding="async"/></figure>` : '');
 const teaser = (t) => (t.length > 140 ? `${t.slice(0, 140).trimEnd()}…` : t);
-const shareText = (b, url) => `${b.text ? `« ${teaser(b.text)} »\n\n` : ''}😂 Lis la suite sur On Bade : ${url}`;
+const shareText = (b, url) => `${b.text ? `« ${teaser(b.text)} »\n\n` : b.image ? '📷 Un bading en image\n\n' : ''}😂 Lis la suite sur On Bade : ${url}`;
 
 // ─── Carte ────────────────────────────────────────────────
 function author(b, small = false) {
@@ -20,7 +22,7 @@ function author(b, small = false) {
 export function quoted(id) {
   const q = S.bading(id);
   if (!q || q.deleted) return `<div class="quote"><span class="muted t-meta">Ce bading n'est plus disponible.</span></div>`;
-  return `<div class="quote" data-go="/bading/${q.id}" role="link" tabindex="0">${author(q, true)}<p class="t-story" style="font-size:16px;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden">${rich(q.text)}</p></div>`;
+  return `<div class="quote" data-go="/bading/${q.id}" role="link" tabindex="0">${author(q, true)}${q.text ? `<p class="t-story" style="font-size:16px;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden">${rich(q.text)}</p>` : ''}${badingImage(q, 'small')}</div>`;
 }
 export const actionsRow = (t) => `
   <div class="actions" data-id="${t.id}">
@@ -44,7 +46,7 @@ export function card(b) {
     <div class="body">
       ${plain ? `<div class="rebaded" style="margin-left:0">${icon('repeat')} ${esc(who)} ${mine ? 'as rebadé' : 'a rebadé'}</div>` : ''}
       <div style="display:flex;align-items:center;gap:8px">${author(t)}<span class="spacer"></span><button class="icon-btn" style="width:34px;height:34px" data-a="more" data-id="${t.id}" aria-label="Plus d'options">${icon('ellipsis')}</button></div>
-      ${plain ? (origin && !origin.deleted ? `<p class="t-story">${rich(origin.text)}</p>` : quoted(b.rebadeOf)) : `${b.text ? `<p class="t-story">${rich(b.text)}</p>` : ''}${isRebade ? quoted(b.rebadeOf) : ''}`}
+      ${plain ? (origin && !origin.deleted ? `${origin.text ? `<p class="t-story">${rich(origin.text)}</p>` : ''}${badingImage(origin)}` : quoted(b.rebadeOf)) : `${b.text ? `<p class="t-story">${rich(b.text)}</p>` : ''}${badingImage(b)}${isRebade ? quoted(b.rebadeOf) : ''}`}
       ${actionsRow(t)}
     </div>
   </article>`;
@@ -143,7 +145,7 @@ export function openShare(target) {
     <div style="background:var(--brand);padding:14px;border-radius:var(--r-lg)">
       <div style="background:var(--bg);border-radius:var(--r-md);padding:16px;display:flex;flex-direction:column;gap:12px">
         <div style="display:flex;align-items:center;gap:10px">${avatar(b.anonymous ? null : user, 30)}<b style="${b.anonymous ? 'color:var(--text-2)' : ''}">${esc(name)}</b></div>
-        <p style="font-weight:600;font-size:18px;line-height:25px;display:-webkit-box;-webkit-line-clamp:9;-webkit-box-orient:vertical;overflow:hidden">${esc(b.text)}</p>
+        ${b.text ? `<p style="font-weight:600;font-size:18px;line-height:25px;display:-webkit-box;-webkit-line-clamp:${b.image ? 3 : 9};-webkit-box-orient:vertical;overflow:hidden">${esc(b.text)}</p>` : ''}${b.image ? `<img src="${b.image.src}" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:var(--r-md)"/>` : ''}
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 4px 0;color:#fff"><span style="display:flex;align-items:center;gap:6px;font-family:var(--font-display);font-weight:800;font-size:17px">${logo(22, '#fff')} on bade</span><span class="t-small" style="color:#F1E4FF">jebade.app</span></div>
     </div>
@@ -168,7 +170,7 @@ export function openShare(target) {
     }
     if (k === 'img') {
       const blob = await renderShareImage(b);
-      const file = new File([blob], `je-bade-${b.id}.png`, { type: 'image/png' });
+      const file = new File([blob], `on-bade-${b.id}.png`, { type: 'image/png' });
       if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file], text: url }); done('Image partagée'); return; } catch {} }
       const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: file.name });
       a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); done('Image téléchargée');
@@ -187,12 +189,20 @@ async function renderShareImage(b) {
   g.fillStyle = b.anonymous ? '#A9A4A4' : '#F4F1F1'; g.font = '700 44px Figtree';
   g.fillText(name, 120, 170);
   g.fillStyle = '#F4F1F1'; g.font = '600 52px Figtree';
-  const words = b.text.split(/\s+/); let line = '', y = 280; const maxW = W - 240, lh = 72, maxY = H - 300;
+  const words = b.text ? b.text.split(/\s+/) : []; let line = '', y = 280; const maxW = W - 240, lh = 72, maxY = b.image ? 280 + lh * 2 : H - 300;
   for (const w of words) {
     const test = line ? `${line} ${w}` : w;
     if (g.measureText(test).width > maxW) { g.fillText(line, 120, y); line = w; y += lh; if (y > maxY) { line = '…'; break; } } else line = test;
   }
-  if (y <= maxY + lh) g.fillText(line, 120, y);
+  if (line && y <= maxY + lh) g.fillText(line, 120, y);
+  if (b.image) {
+    // Image du bading recadrée en « cover » dans la zone restante de la carte.
+    const im = new Image(); im.src = b.image.src; await im.decode().catch(() => {});
+    const top = words.length ? y + 50 : 220, bx = 120, bw = W - 240, bh = H - 300 - top;
+    const r = Math.max(bw / im.naturalWidth, bh / im.naturalHeight), sw = bw / r, sh = bh / r;
+    g.save(); rr(bx, top, bw, bh, 28); g.clip();
+    g.drawImage(im, (im.naturalWidth - sw) / 2, (im.naturalHeight - sh) / 2, sw, sh, bx, top, bw, bh); g.restore();
+  }
   const logoImg = new Image(); logoImg.src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="#fff"><path d="M40 46a22 22 0 0 1 44 0V214a22 22 0 0 1-44 0Z"/><path fill-rule="evenodd" d="M68 158A78 78 0 1 0 224 158A78 78 0 1 0 68 158Z M104 146H188A42 42 0 0 1 104 146Z"/></svg>`)}`;
   await logoImg.decode().catch(() => {});
   g.drawImage(logoImg, 70, H - 160, 90, 90);
