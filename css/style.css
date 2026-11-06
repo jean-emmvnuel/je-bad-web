@@ -204,6 +204,7 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .quote:hover { background: var(--surface); }
 
 .avatar { line-height: 1; border-radius: 50%; display: grid; place-items: center; flex: none; overflow: hidden; font-family: var(--font-display); font-weight: 800; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .avatar.anon { background: var(--surface-2); border: 1px solid var(--line); color: var(--text-2); }
 .verified { width: 16px; height: 16px; flex: none; }
 
@@ -511,3 +512,6 @@ button.c-sticker:hover .stk { transform: rotate(var(--rot, 0deg)) scale(1.04); }
   .main .pf-tabs { margin: 0 0 16px; }
   .main .pf-note { margin: 0 4px 14px; }
 }
+/* Photo de profil : aperçu rond dans l'éditeur */
+.cropper-frame.round { border-radius: 50%; }
+.cropper-frame.round .g { display: none; }

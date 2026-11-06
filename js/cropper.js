@@ -22,7 +22,8 @@ export function readImageFile(file) {
 
 /**
  * Ouvre l'éditeur plein écran. `src` = data URL de l'original.
- * `opts.ratios` (['4:5', '1:1'] ; ['1:1'] pour un sticker), `opts.outMax` (1 080 ; 512 pour un sticker), `opts.title`.
+ * `opts.ratios` (['4:5', '1:1'] ; ['1:1'] pour un sticker ou une photo de profil), `opts.outMax` (1 080 ; 512 sticker ; 400 photo),
+ * `opts.title`, `opts.round` (aperçu rond pour la photo de profil).
  * Résout { dataUrl, ratio, w, h, crop } (crop = réglages pour rouvrir l'éditeur) ou null si annulé.
  */
 export function openCropper(src, initial = {}, opts = {}) {
@@ -34,7 +35,7 @@ export function openCropper(src, initial = {}, opts = {}) {
   });
 }
 
-function mount(img, initial, resolve, { ratios = ['4:5', '1:1'], outMax = 1080, title = 'Recadrer' } = {}) {
+function mount(img, initial, resolve, { ratios = ['4:5', '1:1'], outMax = 1080, title = 'Recadrer', round = false } = {}) {
   const RATIOS = ALL_RATIOS.filter((r) => ratios.includes(r[0]));
   const OUT_MAX = outMax;
   const root = document.createElement('div');
@@ -44,7 +45,7 @@ function mount(img, initial, resolve, { ratios = ['4:5', '1:1'], outMax = 1080, 
     <header class="cropper-bar"><button class="btn btn-ghost btn-sm" data-cancel>Annuler</button><h2 class="t-heading">${esc(title)}</h2><button class="btn btn-primary btn-sm" data-ok>Valider</button></header>
     <div class="cropper-stage" data-stage>
       <img alt="" draggable="false" data-img/>
-      <div class="cropper-frame" data-frame><i class="g g1"></i><i class="g g2"></i><i class="g g3"></i><i class="g g4"></i>
+      <div class="cropper-frame${round ? ' round' : ''}" data-frame><i class="g g1"></i><i class="g g2"></i><i class="g g3"></i><i class="g g4"></i>
         ${['nw', 'ne', 'sw', 'se'].map((c) => `<span class="h h-${c}" data-h="${c}"></span>`).join('')}</div>
     </div>
     <div class="cropper-tools">

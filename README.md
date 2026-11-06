@@ -36,7 +36,7 @@ Ce dépôt est la **version web** de l'app mobile ([jean-emmvnuel/jebade](https:
 | 💬 | **Commentaires et réponses** en texte ou en **sticker** : 16 stickers On Bade (réactions, nouchi) + **stickers personnels** comme sur TikTok (créés depuis une photo, ou enregistrés en touchant le sticker d'un Badeur ; collection de 50), traits de fil, repli des réponses, suppression avec confirmation |
 | 🔁 | **Rebade** direct ou avec avis · 📤 **Partage** WhatsApp, Facebook, lien dynamique, **image PNG générée** (canvas) |
 | 🔖 | **Favoris**, 🎭 **mode anonyme**, @mentions avec suggestions, brouillon gardé |
-| 👤 | **Profil** : statistiques qui défilent, onglets Badings / Favoris / Anonymes, **20 avatars « Badeur »** au hasard |
+| 👤 | **Profil** : statistiques qui défilent, onglets Badings / Favoris / Anonymes, **photo de profil** importée et recadrée en rond |
 | 🔔 | **Notifications du navigateur** (rires, réponses) |
 | ⚙️ | Paramètres : pseudo, mentions, blocages, badge vérifié, **demande de suppression du compte**, copie des données, confidentialité |
 | 💻 | **Vrai rendu web** sur ordinateur : barre de navigation en haut, 3 colonnes (mon compte · fil en cartes · badings du moment), inscription en écran partagé ; barre d'onglets sur mobile |
@@ -70,7 +70,6 @@ manifest.webmanifest  ← manifeste de la PWA
 js/store.js           ← état + règles métier V1 + données simulées (→ API plus tard)
 js/components.js      ← carte de bading, actions, rebade, partage (image canvas), menus
 js/ui.js              ← icônes, avatars, feuilles, toasts, confettis GSAP
-js/faces.js           ← générateur d'avatars « Badeur »
 js/notify.js          ← notifications du navigateur + activité simulée
 js/views/*.js         ← onboarding, auth, fil, bading, publier, profil, notifications, paramètres, confidentialité
 data/privacy.json     ← politique de confidentialité (même source que l'app)

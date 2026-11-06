@@ -1,4 +1,3 @@
-import { faceSvg } from './faces.js';
 import { ICONS } from './icons-data.js';
 
 export const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -24,7 +23,8 @@ export const verified = () => `<svg class="verified" viewBox="0 0 24 24" aria-la
 export function avatar(u, size = 44) {
   const s = `width:${size}px;height:${size}px`;
   if (!u) return `<span class="avatar anon" style="${s}" role="img" aria-label="Badeur anonyme">${icon('mask').replace('class="i ', `style="width:${size * 0.5}px;height:${size * 0.5}px" class="i `)}</span>`;
-  if (u.avatar) return `<span class="avatar" style="${s}" role="img" aria-label="${esc(u.pseudo)}">${faceSvg(u.avatar)}</span>`;
+  // Photo de profil importée (recadrée en carré) ; sinon l'initiale sur une couleur.
+  if (u.photo) return `<span class="avatar" style="${s}" role="img" aria-label="${esc(u.pseudo)}"><img src="${u.photo}" alt="" draggable="false"/></span>`;
   return `<span class="avatar" style="${s};background:hsl(${u.hue},38%,30%);color:hsl(${u.hue},80%,86%);font-size:${size * 0.42}px" role="img" aria-label="${esc(u.pseudo)}">${esc(u.pseudo[0]?.toUpperCase())}</span>`;
 }
 

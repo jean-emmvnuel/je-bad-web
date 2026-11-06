@@ -1,6 +1,6 @@
 import * as S from '../store.js';
-import { $, avatar, closeSheet, countUp, esc, icon, reduceMotion, sheet, toast, verified } from '../ui.js';
-import { faceSvg, facePalette } from '../faces.js';
+import { $, avatar, closeSheet, countUp, esc, icon, reduceMotion, sheet, sheetItem, toast, verified } from '../ui.js';
+import { ACCEPT, openCropper, readImageFile } from '../cropper.js';
 import { card, wireActions } from '../components.js';
 
 const TABS = [{ k: 'public', label: 'Badings' }, { k: 'fav', label: 'Favoris', lock: true }, { k: 'anon', label: 'Anonymes', lock: true }];
@@ -23,7 +23,7 @@ export function profileView(root, { go }) {
     return `
     <header class="topbar"><h1 class="t-heading" style="flex:1">Profil</h1><a class="icon-btn" href="#/settings" aria-label="Paramètres">${icon('settings')}</a></header>
     <section class="profile-hero pf-card">
-      <button class="pf-avatar" data-avatar aria-label="Changer d'avatar">
+      <button class="pf-avatar" data-avatar aria-label="Changer ma photo de profil">
         ${avatar(u, 96)}
         <span class="pf-edit">${icon('pencil')}</span>
       </button>
@@ -35,7 +35,8 @@ export function profileView(root, { go }) {
         <div><b data-cu="${p.reduce((s, b) => s + b.rebades, 0)}">0</b><span>rebades</span></div>
         <div><b data-cu="${p.reduce((s, b) => s + b.shares, 0)}">0</b><span>partages</span></div>
       </div>
-      <button class="btn btn-secondary btn-sm pf-btn" data-avatar2>${icon('pencil')} Changer mon avatar</button>
+      <button class="btn btn-secondary btn-sm pf-btn" data-avatar2>${icon('image')} ${u.photo ? 'Changer ma photo' : 'Ajouter une photo'}</button>
+      <input type="file" accept="${ACCEPT}" data-photo-file hidden/>
     </section>
     <div class="pf-tabs" role="tablist">${TABS.map((t) => `<button role="tab" data-tab="${t.k}">${t.lock ? icon('lock') : ''}${t.label}${t.k === 'fav' && S.get().favorites.length ? ` <span class="pf-count">${S.get().favorites.length}</span>` : ''}</button>`).join('')}</div>
     <div data-list></div>`;
@@ -56,35 +57,30 @@ export function profileView(root, { go }) {
     root.innerHTML = head();
     root.querySelectorAll('[data-cu]').forEach((el) => countUp(el, Number(el.dataset.cu)));
     root.querySelectorAll('[data-tab]').forEach((t) => (t.onclick = () => { tab = t.dataset.tab; ink(); list(); }));
-    $('[data-avatar]', root).onclick = openPicker; $('[data-avatar2]', root).onclick = openPicker;
+    $('[data-avatar]', root).onclick = photoMenu; $('[data-avatar2]', root).onclick = photoMenu;
+    $('[data-photo-file]', root).onchange = onFile;
     list(); requestAnimationFrame(ink);
   };
   wireActions(root, go);
   root.addEventListener('changed', draw);
   draw();
 
-  function openPicker() {
-    let palette = facePalette(), sel = null;
-    const p = sheet({ title: 'Choisis ton avatar', html: `<div class="pad">
-      <div style="display:flex;align-items:center;gap:16px"><span data-prev style="width:72px;height:72px;border-radius:50%;overflow:hidden;border:2px solid var(--brand);flex:none;display:grid;place-items:center">${avatar(me(), 68)}</span><p class="muted">Ta tête de Badeur, visible sur ton profil et tes badings signés. Jamais sur tes badings anonymes.</p></div>
-      <div class="faces" role="radiogroup" data-faces></div>
-      <div style="display:flex;gap:12px"><button class="btn btn-secondary" data-shuffle>${icon('shuffle')} Mélanger</button><button class="btn btn-primary" style="flex:1" data-pick disabled>Choisir</button></div>
-    </div>` });
-    const grid = p.querySelector('[data-faces]');
-    const paint = () => {
-      grid.innerHTML = palette.map((a, i) => `<button role="radio" aria-checked="${sel === i}" aria-label="Avatar ${i + 1}" data-i="${i}">${faceSvg(a)}</button>`).join('');
-      if (!reduceMotion()) gsap.from(grid.children, { scale: 0.6, opacity: 0, duration: 0.35, stagger: 0.02, ease: 'back.out(2)' });
-    };
-    paint();
-    grid.onclick = (e) => {
-      const b = e.target.closest('[data-i]'); if (!b) return;
-      sel = Number(b.dataset.i);
-      grid.querySelectorAll('[data-i]').forEach((x) => x.setAttribute('aria-checked', String(Number(x.dataset.i) === sel)));
-      const prev = p.querySelector('[data-prev]'); prev.innerHTML = `<span style="width:68px;height:68px;display:block">${faceSvg(palette[sel])}</span>`;
-      gsap.fromTo(prev.firstElementChild, { scale: 0.5 }, { scale: 1, duration: 0.5, ease: 'elastic.out(1, 0.5)' });
-      p.querySelector('[data-pick]').disabled = false;
-    };
-    p.querySelector('[data-shuffle]').onclick = () => { palette = facePalette(); sel = null; p.querySelector('[data-pick]').disabled = true; paint(); };
-    p.querySelector('[data-pick]').onclick = () => { S.setAvatar(palette[sel]); closeSheet(); toast('Nouvel avatar enregistré'); draw(); };
+  // Photo de profil : on choisit une image, on la recadre en carré, elle s'affiche en rond partout.
+  function photoMenu() {
+    if (!me().photo) { $('[data-photo-file]', root).click(); return; }
+    const p = sheet({ title: 'Photo de profil', html: `<div class="pad" style="gap:0">
+      ${sheetItem('pick', 'Choisir une autre photo', { iconName: 'image' })}
+      ${sheetItem('remove', 'Retirer la photo', { iconName: 'trash', danger: true })}</div>` });
+    p.querySelector('[data-act=pick]').onclick = () => { closeSheet(); $('[data-photo-file]', root).click(); };
+    p.querySelector('[data-act=remove]').onclick = () => { S.setPhoto(null); closeSheet(); toast('Photo retirée'); draw(); };
+  }
+  async function onFile(e) {
+    const file = e.target.files?.[0]; e.target.value = '';
+    try {
+      const src = await readImageFile(file);
+      const r = await openCropper(src, {}, { ratios: ['1:1'], outMax: 400, title: 'Photo de profil', round: true });
+      if (!r) return;
+      S.setPhoto(r.dataUrl); toast('Photo de profil enregistrée'); draw();
+    } catch (x) { if (x.message !== 'none') toast(x.message); }
   }
 }

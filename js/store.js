@@ -63,7 +63,7 @@ function seed() {
     B({ id: 'n-3', authorId: 'u3', anonymous: false, text: "Ma tante a envoyé un vocal de 7 minutes pour dire « ok ». Les 6 premières minutes c'était le bruit du marché.", likes: 21, rebades: 2, shares: 3 }),
   ];
   return {
-    v: 3, onboarded: false, session: null, users, badings, comments, notifications, incoming,
+    v: 4, onboarded: false, session: null, users, badings, comments, notifications, incoming,
     draft: { text: '', anonymous: false, image: null }, recentStickers: [], customStickers, myStickers: [], mentionPolicy: 'everyone', favorites: [], blocked: [], postedToday: 0,
     badge: { status: 'refused', reason: 'il faut au moins 10 badings publiés', decidedAt: now - 3 * d },
     deletion: { status: 'none' }, pendingLink: null, notifEnabled: false, accounts: {}, pendingSignup: null,
@@ -76,6 +76,8 @@ try { state = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch { state =
 // Migration v1 → v2 (images et stickers) sans perdre la session ni les badings de la démo.
 if (state.v === 1) { state.v = 2; state.recentStickers = []; state.draft = { ...state.draft, image: null }; state.comments.push(...seed().comments.filter((c) => c.sticker)); }
 if (state.v === 2) { const s = seed(); state.v = 3; state.customStickers = s.customStickers; state.myStickers = []; state.comments.push(...s.comments.filter((c) => ['c11', 'c12', 'c13'].includes(c.id))); }
+// v3 → v4 : les avatars générés sont remplacés par une vraie photo de profil.
+if (state.v === 3) { state.v = 4; Object.values(state.users).forEach((u) => delete u.avatar); if (state.session?.user) delete state.session.user.avatar; }
 if (state.v !== 3) state = seed();
 
 const listeners = new Set();
@@ -153,7 +155,7 @@ export async function logIn(email, pw) {
 }
 export function signIn(identifier, pseudo) {
   const u = { id: ME, pseudo, verified: false, hue: 280, joinedAt: Date.now() - 45 * d };
-  state.users[ME] = { ...u, ...(state.users[ME]?.avatar ? { avatar: state.users[ME].avatar } : {}) };
+  state.users[ME] = { ...u, ...(state.users[ME]?.photo ? { photo: state.users[ME].photo } : {}) };
   state.session = { email: identifier, user: state.users[ME] };
   commit();
 }
@@ -190,7 +192,8 @@ export function toggleFavorite(id) {
 export function block(uid) { if (!state.blocked.includes(uid)) state.blocked.push(uid); commit(); }
 export function unblock(uid) { state.blocked = state.blocked.filter((x) => x !== uid); commit(); }
 export function changePseudo(p) { state.users[ME].pseudo = p; state.users[ME].verified = false; syncMe(); commit(); }
-export function setAvatar(a) { state.users[ME].avatar = a; syncMe(); commit(); }
+/** Photo de profil : JPEG carré 400 px (data URL) ou null pour la retirer. En prod : upload puis URL du CDN. */
+export function setPhoto(src) { if (src) state.users[ME].photo = src; else delete state.users[ME].photo; syncMe(); commit(); }
 export function requestBadge(links) { state.badge = { status: 'pending', links }; commit(); }
 export function requestDeletion(reason) { state.deletion = { status: 'pending', requestedAt: Date.now(), reason }; commit(); }
 export function cancelDeletion() { state.deletion = { status: 'none' }; commit(); }
